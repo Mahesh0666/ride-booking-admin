@@ -1,49 +1,39 @@
-const mongoose = require('mongoose');
 const User = require('../models/User');
-require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
-
-const adminData = {
-  name: 'Admin',
-  email: 'maheshbabuv57@gmail.com',
-  password: 'Venu@123',
-  phone: '9999999999',
-  role: 'admin',
-  isDriver: false,
-  isVerified: true,
-  onboardingStatus: 'approved',
-};
 
 async function seedAdmin() {
   try {
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/ride_booking');
-    console.log('Connected to MongoDB');
+    const adminEmail = (process.env.ADMIN_EMAIL || 'srgrvg90@gmail.com').toLowerCase();
 
-    const existing = await User.findOne({ email: adminData.email });
+    const adminData = {
+      name: 'Admin',
+      email: adminEmail,
+      password: 'Venu@123',
+      phone: '9999999999',
+      role: 'admin',
+      isDriver: false,
+      isVerified: true,
+      onboardingStatus: 'approved',
+    };
+
+    const existing = await User.findOne({ email: adminEmail });
     if (existing) {
-      console.log(`Admin user already exists: ${adminData.email} (role: ${existing.role})`);
+      console.log(`Admin user already exists: ${adminEmail} (role: ${existing.role})`);
       if (existing.role !== 'admin') {
-        console.log('Updating role to admin...');
         existing.role = 'admin';
         await existing.save({ validateBeforeSave: false });
         console.log('Role updated to admin');
       }
-      await mongoose.disconnect();
       return;
     }
 
     const admin = await User.create(adminData);
     console.log(`Admin user created successfully:`);
-    console.log(`  Email: ${adminData.email}`);
-    console.log(`  Password: ${adminData.password}`);
+    console.log(`  Email: ${adminEmail}`);
+    console.log(`  Password: Venu@123`);
     console.log(`  Role: ${admin.role}`);
-
-    await mongoose.disconnect();
-    console.log('Done');
   } catch (err) {
     console.error('Error seeding admin:', err.message);
-    await mongoose.disconnect();
-    process.exit(1);
   }
 }
 
-seedAdmin();
+module.exports = { seedAdmin };

@@ -42,9 +42,12 @@ const sosRoutes = require('./routes/sosRoutes');
 const payoutRoutes = require('./routes/payoutRoutes');
 const cabBookingRoutes = require('./routes/cabBookingRoutes');
 
-connectDB().then(() => {
+connectDB().then(async () => {
   const { seedServices } = require('./seed/seedServices');
-  return seedServices();
+  await seedServices();
+
+  const { seedAdmin } = require('./seed/seedAdmin');
+  await seedAdmin();
 });
 
 const app = express();
