@@ -1,0 +1,6 @@
+Starting project at C:\Users\mahes\OneDrive\Desktop\ride booking\mobile-app
+Starting Metro Bundler
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Android Bundled 1600ms node_modules\expo\AppEntry.js (907 modules)
+Android Bundled 2018ms node_modules\expo\AppEntry.js (1 module)

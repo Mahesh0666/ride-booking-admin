@@ -1,0 +1,24 @@
+
+> ride-booking-admin@1.0.0 dev
+> vite
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m421[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+[2m10:07:43 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/context/AuthContext.tsx, /src/pages/RidesPage.tsx, /src/pages/DashboardPage.tsx, /src/pages/PaymentsPage.tsx, /src/pages/DriversPage.tsx, /src/pages/UsersPage.tsx[22m
+[2m10:07:56 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DriversPage.tsx[22m
+[2m1:54:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/PaymentsPage.tsx[22m
+[2m1:54:44 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DashboardPage.tsx[22m
+[2m1:54:44 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/PaymentsPage.tsx[22m
+[2m1:54:45 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/RidesPage.tsx[22m
+[2m2:08:05 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/context/AuthContext.tsx, /src/pages/RidesPage.tsx, /src/pages/DashboardPage.tsx, /src/pages/PaymentsPage.tsx, /src/pages/DriversPage.tsx, /src/pages/UsersPage.tsx[22m
+[2m2:08:13 PM[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m2:08:13 PM[22m [36m[1m[vite][22m[39m server restarted.
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.20.144.1:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.10:[1m5173[22m/[39m

@@ -1,0 +1,71 @@
+{
+  "expo": {
+    "name": "Ride-Book Partner",
+    "slug": "ride-booking-driver",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4361ee"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ridebook.partner",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Ride-Book Partner uses your location while you're online so you receive nearby ride requests and riders can track your arrival.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Ride-Book Partner continues using your location in the background while you're online so you receive nearby ride requests.",
+        "NSCameraUsageDescription": "Ride-Book Partner uses the camera to capture your driving licence, vehicle documents, and profile photo.",
+        "NSPhotoLibraryUsageDescription": "Ride-Book Partner accesses your photo library so you can upload your vehicle and licence documents.",
+        "UIBackgroundModes": [
+          "location"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.ridebook.partner",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#4361ee"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_ANDROID_API_KEY"
+        }
+      }
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Ride-Book Partner uses your location while you're online so you receive nearby ride requests.",
+          "locationAlwaysAndWhenInUsePermission": "Ride-Book Partner uses your location in the background while you're online so you receive nearby ride requests.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      "expo-image-picker"
+    ],
+    "extra": {
+      "apiUrl": "http://192.168.1.9:5000/api"
+    }
+  }
+}
