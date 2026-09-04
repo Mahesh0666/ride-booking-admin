@@ -650,7 +650,7 @@ const adminLoginRequestOtp = async (req, res, next) => {
     user.loginOtpExpire = Date.now() + 5 * 60 * 1000;
     await user.save({ validateBeforeSave: false });
 
-    await sendOtpEmail(email, otp);
+    await sendOtpEmail(email, otp).catch(err => console.error('OTP email failed:', err.message));
 
     res.status(200).json({
       success: true,
@@ -723,10 +723,33 @@ const adminLoginVerifyOtp = async (req, res, next) => {
   }
 };
 
+const seedAdminUser = async (req, res, next) => {
+  try {
+    const adminEmail = (process.env.ADMIN_EMAIL || 'srgrvg90@gmail.com').toLowerCase();
+    const existing = await User.findOne({ email: adminEmail, role: 'admin' });
+    if (existing) {
+      return res.status(200).json({ success: true, message: 'Admin already exists', email: adminEmail });
+    }
+    const admin = await User.create({
+      name: 'Admin',
+      email: adminEmail,
+      password: 'Venu@123',
+      phone: '9999999999',
+      role: 'admin',
+      isDriver: false,
+      isVerified: true,
+      onboardingStatus: 'approved',
+    });
+    res.status(201).json({ success: true, message: 'Admin created', email: adminEmail });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   register,
   login,
-  requestOtp,
+  sendOtp,
   verifyOtp,
   otpRegister,
   submitOnboarding,
@@ -744,4 +767,5 @@ module.exports = {
   resetPassword,
   adminLoginRequestOtp,
   adminLoginVerifyOtp,
+  seedAdminUser,
 };

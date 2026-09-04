@@ -5,7 +5,7 @@ const { otpRequestLimiter, otpVerifyLimiter } = require('../middleware/rateLimit
 const {
   register,
   login,
-  requestOtp,
+  sendOtp,
   verifyOtp,
   otpRegister,
   submitOnboarding,
@@ -23,18 +23,20 @@ const {
   resetPassword,
   adminLoginRequestOtp,
   adminLoginVerifyOtp,
+  seedAdminUser,
 } = require('../controllers/authController');
 
 router.post('/register', register);
 router.post('/login', login);
 router.post('/admin/login-request-otp', adminLoginRequestOtp);
 router.post('/admin/login-verify-otp', adminLoginVerifyOtp);
-router.post('/otp/request', otpRequestLimiter, requestOtp);
+router.post('/otp/request', otpRequestLimiter, sendOtp);
 router.post('/otp/verify', otpVerifyLimiter, verifyOtp);
 router.post('/otp/register', otpVerifyLimiter, otpRegister);
 router.post('/forgot-password', forgotPassword);
 router.post('/verify-reset-otp', verifyResetOtp);
 router.post('/reset-password', resetPassword);
+router.post('/seed-admin', seedAdminUser);
 
 router.use(protect);
 
