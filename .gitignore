@@ -6,6 +6,17 @@ node_modules/
 .DS_Store
 dist/
 build/
+coverage/
+
+# Backend
+backend/logs/
+backend/*.log
+
+# Admin Dashboard
+admin-dashboard/dist/
+admin-dashboard/admin-log.txt
+
+# Mobile Apps
 .expo/
 android/
 ios/
@@ -16,4 +27,7 @@ ios/
 *.mobileprovision
 *.orig.*
 web-build/
-coverage/
+
+# IDE
+.vscode/
+.idea/
