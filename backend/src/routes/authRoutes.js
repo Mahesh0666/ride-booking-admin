@@ -5,7 +5,7 @@ const { otpRequestLimiter, otpVerifyLimiter } = require('../middleware/rateLimit
 const {
   register,
   login,
-  sendOtp,
+  requestOtp,
   verifyOtp,
   otpRegister,
   submitOnboarding,
@@ -30,7 +30,7 @@ router.post('/register', register);
 router.post('/login', login);
 router.post('/admin/login-request-otp', adminLoginRequestOtp);
 router.post('/admin/login-verify-otp', adminLoginVerifyOtp);
-router.post('/otp/request', otpRequestLimiter, sendOtp);
+router.post('/otp/request', otpRequestLimiter, requestOtp);
 router.post('/otp/verify', otpVerifyLimiter, verifyOtp);
 router.post('/otp/register', otpVerifyLimiter, otpRegister);
 router.post('/forgot-password', forgotPassword);

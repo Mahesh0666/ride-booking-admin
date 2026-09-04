@@ -749,7 +749,7 @@ const seedAdminUser = async (req, res, next) => {
 module.exports = {
   register,
   login,
-  sendOtp,
+  requestOtp,
   verifyOtp,
   otpRegister,
   submitOnboarding,
