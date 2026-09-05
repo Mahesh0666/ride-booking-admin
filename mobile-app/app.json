@@ -40,7 +40,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": "YOUR_GOOGLE_MAPS_ANDROID_API_KEY"
+          "apiKey": ""
         }
       }
     },
@@ -55,8 +55,8 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://192.168.1.9:5000/api",
-      "googleMapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+      "apiUrl": "https://ride-booking-api-r62q.onrender.com/api",
+      "googleMapsApiKey": ""
     }
   }
 }

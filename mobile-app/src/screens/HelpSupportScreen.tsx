@@ -88,8 +88,8 @@ export default function HelpSupportScreen({ navigation }: any) {
           </View>
           <View style={styles.contactRow}>
             <Text style={styles.contactIcon}>✉️</Text>
-            <TouchableOpacity onPress={() => Alert.alert('Email', 'support@ridenow.app')}>
-              <Text style={styles.contactLink}>support@ridenow.app</Text>
+            <TouchableOpacity onPress={() => Alert.alert('Email', 'maheshbabuv57@gmail.com')}>
+              <Text style={styles.contactLink}>maheshbabuv57@gmail.com</Text>
             </TouchableOpacity>
           </View>
         </View>

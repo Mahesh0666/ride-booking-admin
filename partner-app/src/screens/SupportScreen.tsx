@@ -42,7 +42,7 @@ export default function SupportScreen({ navigation }: any) {
   };
 
   const emailSupport = () => {
-    Linking.openURL('mailto:support@ridebooking.app?subject=Driver%20Support');
+    Linking.openURL('mailto:maheshbabuv57@gmail.com?subject=Driver%20Support');
   };
 
   return (
@@ -63,7 +63,7 @@ export default function SupportScreen({ navigation }: any) {
         <TouchableOpacity style={styles.contactCard} onPress={emailSupport}>
           <Text style={styles.contactIcon}>✉️</Text>
           <Text style={styles.contactLabel}>Email</Text>
-          <Text style={styles.contactValue}>support@ridenow.app</Text>
+          <Text style={styles.contactValue}>maheshbabuv57@gmail.com</Text>
         </TouchableOpacity>
       </View>
 

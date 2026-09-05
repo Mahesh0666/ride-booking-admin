@@ -1,6 +1,6 @@
 export const LEGAL_VERSION = '1.0.0';
 export const LEGAL_UPDATED = '18 August 2026';
-export const SUPPORT_EMAIL = 'partners@ridebook.example';
+export const SUPPORT_EMAIL = 'maheshbabuv57@gmail.com';
 
 export interface LegalSection {
   title: string;

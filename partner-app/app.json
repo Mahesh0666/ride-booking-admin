@@ -46,7 +46,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": "YOUR_GOOGLE_MAPS_ANDROID_API_KEY"
+          "apiKey": ""
         }
       }
     },
@@ -65,7 +65,7 @@
       "expo-image-picker"
     ],
     "extra": {
-      "apiUrl": "http://192.168.1.9:5000/api"
+      "apiUrl": "https://ride-booking-api-r62q.onrender.com/api"
     }
   }
 }
