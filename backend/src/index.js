@@ -56,7 +56,13 @@ app.use(helmet());
 app.use(mongoSanitize());
 
 const allowedOrigins = config.isProduction
-  ? [process.env.ADMIN_DASHBOARD_URL || 'https://admin.yourdomain.com']
+  ? [
+      process.env.ADMIN_DASHBOARD_URL,
+      'https://ride-booking-dashboard.onrender.com',
+      'https://ride-admin-dashboard.onrender.com',
+      'https://bumbblejobs.com',
+      'https://www.bumbblejobs.com',
+    ].filter(Boolean)
   : ['http://localhost:5173', 'http://localhost:5174', 'http://192.168.1.9:5173'];
 
 app.use(cors({
