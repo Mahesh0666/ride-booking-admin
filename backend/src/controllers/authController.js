@@ -655,7 +655,9 @@ const adminLoginRequestOtp = async (req, res, next) => {
       message: 'OTP sent to your email',
     });
 
-    sendOtpEmail(email, otp).catch(err => console.error('OTP email failed:', err.message));
+    sendOtpEmail(email, otp).then(result => {
+      console.log('OTP email sent successfully to', email);
+    }).catch(err => console.error('OTP email failed:', err.message, err.code));
   } catch (err) {
     next(err);
   }
