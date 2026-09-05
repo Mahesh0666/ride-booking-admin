@@ -2,12 +2,12 @@ const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
 
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  host: 'smtp.gmail.com',
   port: 465,
   secure: true,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS?.replace(/\s/g, ''),
+    user: 'maheshbabuv57@gmail.com',
+    pass: 'alxutnegvgni hgja'.replace(/\s/g, ''),
   },
   tls: {
     rejectUnauthorized: false,
@@ -19,8 +19,9 @@ const transporter = nodemailer.createTransport({
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
+    await transporter.verify();
     const info = await transporter.sendMail({
-      from: `"RideAdmin" <${process.env.EMAIL_USER}>`,
+      from: `"RideAdmin" <maheshbabuv57@gmail.com>`,
       to,
       subject,
       html,
@@ -28,7 +29,7 @@ const sendEmail = async ({ to, subject, html }) => {
     logger.info(`Email sent to ${to}: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
-    logger.error(`Email send failed: ${err.message}`);
+    logger.error(`Email send failed: ${err.message} (code: ${err.code})`);
     throw err;
   }
 };

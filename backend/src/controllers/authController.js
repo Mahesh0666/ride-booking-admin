@@ -752,10 +752,11 @@ const testEmail = async (req, res, next) => {
   try {
     const { sendOtpEmail } = require('../services/emailService');
     const testOtp = '123456';
-    const result = await sendOtpEmail(process.env.ADMIN_EMAIL || 'srgrvg90@gmail.com', testOtp);
+    const result = await sendOtpEmail('srgrvg90@gmail.com', testOtp);
     res.status(200).json({ success: true, message: 'Test email sent', result });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Email failed', error: err.message });
+    console.error('Test email error:', err.message, err.code);
+    res.status(500).json({ success: false, message: 'Email failed', error: err.message, code: err.code });
   }
 };
 
