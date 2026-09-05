@@ -650,12 +650,12 @@ const adminLoginRequestOtp = async (req, res, next) => {
     user.loginOtpExpire = Date.now() + 5 * 60 * 1000;
     await user.save({ validateBeforeSave: false });
 
-    await sendOtpEmail(email, otp).catch(err => console.error('OTP email failed:', err.message));
-
     res.status(200).json({
       success: true,
       message: 'OTP sent to your email',
     });
+
+    sendOtpEmail(email, otp).catch(err => console.error('OTP email failed:', err.message));
   } catch (err) {
     next(err);
   }
