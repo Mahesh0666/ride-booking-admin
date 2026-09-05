@@ -96,6 +96,7 @@ app.get('/', (req, res) => {
     success: true,
     message: 'Ride Booking API is running',
     version: '1.0.0',
+    mongoState: require('mongoose').connection.readyState,
   });
 });
 
