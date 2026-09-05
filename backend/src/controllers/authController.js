@@ -746,6 +746,17 @@ const seedAdminUser = async (req, res, next) => {
   }
 };
 
+const testEmail = async (req, res, next) => {
+  try {
+    const { sendOtpEmail } = require('../services/emailService');
+    const testOtp = '123456';
+    const result = await sendOtpEmail(process.env.ADMIN_EMAIL || 'srgrvg90@gmail.com', testOtp);
+    res.status(200).json({ success: true, message: 'Test email sent', result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Email failed', error: err.message });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -768,4 +779,5 @@ module.exports = {
   adminLoginRequestOtp,
   adminLoginVerifyOtp,
   seedAdminUser,
+  testEmail,
 };

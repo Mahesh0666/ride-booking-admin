@@ -24,6 +24,7 @@ const {
   adminLoginRequestOtp,
   adminLoginVerifyOtp,
   seedAdminUser,
+  testEmail,
 } = require('../controllers/authController');
 
 router.post('/register', register);
@@ -37,6 +38,7 @@ router.post('/forgot-password', forgotPassword);
 router.post('/verify-reset-otp', verifyResetOtp);
 router.post('/reset-password', resetPassword);
 router.post('/seed-admin', seedAdminUser);
+router.post('/test-email', testEmail);
 
 router.use(protect);
 
