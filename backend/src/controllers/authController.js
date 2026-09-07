@@ -728,8 +728,13 @@ const adminLoginVerifyOtp = async (req, res, next) => {
 const seedAdminUser = async (req, res, next) => {
   try {
     const adminEmail = (process.env.ADMIN_EMAIL || 'maheshmessi78@gmail.com').toLowerCase();
-    const existing = await User.findOne({ email: adminEmail, role: 'admin' });
+    const existing = await User.findOne({ role: 'admin' });
     if (existing) {
+      if (existing.email !== adminEmail) {
+        existing.email = adminEmail;
+        await existing.save({ validateBeforeSave: false });
+        return res.status(200).json({ success: true, message: 'Admin email updated', email: adminEmail });
+      }
       return res.status(200).json({ success: true, message: 'Admin already exists', email: adminEmail });
     }
     const admin = await User.create({
