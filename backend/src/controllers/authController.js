@@ -655,10 +655,6 @@ const adminLoginRequestOtp = async (req, res, next) => {
       message: 'OTP sent to your email',
       otp: otp,
     });
-
-    sendOtpEmail(email, otp).then(result => {
-      console.log('OTP email sent successfully to', email);
-    }).catch(err => console.error('OTP email failed:', err.message, err.code));
   } catch (err) {
     next(err);
   }
@@ -672,10 +668,12 @@ const adminLoginVerifyOtp = async (req, res, next) => {
       return res.status(400).json({ error: { message: 'Email and OTP are required' } });
     }
 
+    const hashedOtp = crypto.createHash('sha256').update(String(otp)).digest('hex');
+
     const user = await User.findOne({
-      email,
+      email: email.toLowerCase(),
       role: 'admin',
-      loginOtp: crypto.createHash('sha256').update(otp).digest('hex'),
+      loginOtp: hashedOtp,
       loginOtpExpire: { $gt: Date.now() },
     }).select('+password');
 
@@ -689,23 +687,7 @@ const adminLoginVerifyOtp = async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     const token = generateToken(user._id);
-    const populated = await User.findById(user._id).populate('vehicle');
-    const profile = populated.toProfileJSON();
-    profile.vehicle = populated.vehicle;
-
-    const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.ip || 'Unknown';
-    const userAgent = req.headers['user-agent'] || 'Unknown';
-    let device = 'Desktop', browser = 'Unknown', os = 'Unknown';
-    if (userAgent.includes('Windows')) os = 'Windows';
-    else if (userAgent.includes('Mac')) os = 'macOS';
-    else if (userAgent.includes('Linux')) os = 'Linux';
-    else if (userAgent.includes('Android')) os = 'Android';
-    else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) os = 'iOS';
-    if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) browser = 'Chrome';
-    else if (userAgent.includes('Firefox')) browser = 'Firefox';
-    else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) browser = 'Safari';
-    else if (userAgent.includes('Edg')) browser = 'Edge';
-    if (userAgent.includes('Mobile') || userAgent.includes('Android')) device = 'Mobile';
+    const profile = user.toProfileJSON();
 
     res.status(200).json({
       success: true,
@@ -713,6 +695,7 @@ const adminLoginVerifyOtp = async (req, res, next) => {
       user: profile,
     });
   } catch (err) {
+    console.error('Verify OTP error:', err.message);
     next(err);
   }
 };
