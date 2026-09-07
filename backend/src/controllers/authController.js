@@ -707,6 +707,12 @@ const adminLoginVerifyOtp = async (req, res, next) => {
     else if (userAgent.includes('Edg')) browser = 'Edge';
     if (userAgent.includes('Mobile') || userAgent.includes('Android')) device = 'Mobile';
 
+    res.status(200).json({
+      success: true,
+      token,
+      user: profile,
+    });
+
     sendLoginNotification(email, {
       ip: ip.replace('::ffff:', ''),
       device,
@@ -715,12 +721,6 @@ const adminLoginVerifyOtp = async (req, res, next) => {
       location: 'India',
       time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
     }).catch(() => {});
-
-    res.status(200).json({
-      success: true,
-      token,
-      user: profile,
-    });
   } catch (err) {
     next(err);
   }
