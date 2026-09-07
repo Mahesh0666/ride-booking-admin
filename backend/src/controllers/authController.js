@@ -4,7 +4,15 @@ const generateToken = require('../utils/generateToken');
 const { createNotification } = require('./notificationController');
 const otpService = require('../services/otpService');
 const crypto = require('crypto');
-const { sendOtpEmail, sendPasswordChangeConfirmation, sendLoginNotification } = require('../services/emailService');
+let sendOtpEmail, sendPasswordChangeConfirmation, sendLoginNotification;
+try {
+  ({ sendOtpEmail, sendPasswordChangeConfirmation, sendLoginNotification } = require('../services/emailService'));
+} catch (e) {
+  console.error('Email service not loaded:', e.message);
+  sendOtpEmail = async () => ({ success: false });
+  sendPasswordChangeConfirmation = async () => ({ success: false });
+  sendLoginNotification = async () => ({ success: false });
+}
 
 const forgotPassword = async (req, res, next) => {
   try {
@@ -668,6 +676,8 @@ const adminLoginVerifyOtp = async (req, res, next) => {
       return res.status(400).json({ error: { message: 'Email and OTP are required' } });
     }
 
+    console.log('Verify OTP attempt:', { email, otpLength: String(otp).length });
+
     const hashedOtp = crypto.createHash('sha256').update(String(otp)).digest('hex');
 
     const user = await User.findOne({
@@ -676,6 +686,8 @@ const adminLoginVerifyOtp = async (req, res, next) => {
       loginOtp: hashedOtp,
       loginOtpExpire: { $gt: Date.now() },
     }).select('+password');
+
+    console.log('User found:', !!user);
 
     if (!user) {
       return res.status(401).json({ error: { message: 'Invalid or expired OTP' } });
@@ -686,16 +698,22 @@ const adminLoginVerifyOtp = async (req, res, next) => {
     user.isOnline = true;
     await user.save({ validateBeforeSave: false });
 
+    console.log('User saved, generating token...');
+
     const token = generateToken(user._id);
     const profile = user.toProfileJSON();
+
+    console.log('Sending response...');
 
     res.status(200).json({
       success: true,
       token,
       user: profile,
     });
+
+    console.log('Response sent successfully');
   } catch (err) {
-    console.error('Verify OTP error:', err.message);
+    console.error('Verify OTP error:', err.message, err.stack);
     next(err);
   }
 };
