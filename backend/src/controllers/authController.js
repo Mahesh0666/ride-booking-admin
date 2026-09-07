@@ -6,9 +6,12 @@ const otpService = require('../services/otpService');
 const crypto = require('crypto');
 let sendOtpEmail, sendPasswordChangeConfirmation, sendLoginNotification;
 try {
-  ({ sendOtpEmail, sendPasswordChangeConfirmation, sendLoginNotification } = require('../services/emailService'));
+  const emailSvc = require('../services/emailService');
+  sendOtpEmail = emailSvc.sendOtpEmail || (async () => {});
+  sendPasswordChangeConfirmation = emailSvc.sendPasswordChangeConfirmation || (async () => {});
+  sendLoginNotification = emailSvc.sendLoginNotification || (async () => {});
 } catch (e) {
-  console.error('Email service not loaded:', e.message);
+  console.error('Email service load error:', e.message);
   sendOtpEmail = async () => ({ success: false });
   sendPasswordChangeConfirmation = async () => ({ success: false });
   sendLoginNotification = async () => ({ success: false });
