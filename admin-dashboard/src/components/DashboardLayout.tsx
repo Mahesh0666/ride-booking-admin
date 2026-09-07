@@ -102,6 +102,9 @@ export default function DashboardLayout() {
             <div className="flex items-center gap-2 ml-1 pl-2 border-l border-slate-200/60">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs font-semibold flex items-center justify-center flex-shrink-0">{initials}</div>
               <span className="text-sm font-medium text-slate-700 hidden sm:inline">{displayName.split(' ')[0]}</span>
+              <button onClick={handleLogout} className="ml-2 p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition rounded-lg" title="Sign out">
+                <i className="fas fa-sign-out-alt"></i>
+              </button>
             </div>
           </div>
         </header>
