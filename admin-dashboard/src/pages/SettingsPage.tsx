@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import adminService from '../services/adminService';
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'account' | 'security' | 'pricing' | 'system'>('account');
 
   // Account
@@ -30,6 +30,15 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     alert('Settings saved successfully!');
+  };
+
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      logout();
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/login';
+    }
   };
 
   const handleChangeCredentials = async () => {
@@ -304,6 +313,27 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* Logout Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-rose-200 p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center">
+              <i className="fas fa-sign-out-alt text-rose-600 text-xl"></i>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800">Sign Out</h3>
+              <p className="text-sm text-slate-500">Sign out of your admin account on this device</p>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="px-6 py-3 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md shadow-rose-200/60 transition flex items-center gap-2"
+          >
+            <i className="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
