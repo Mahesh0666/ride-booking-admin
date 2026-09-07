@@ -1,26 +1,23 @@
+const { Resend } = require('resend');
 const logger = require('../utils/logger');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    const response = await fetch('https://formsubmit.co/ajax/' + to, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        _subject: subject,
-        message: html,
-        _captcha: 'false',
-      }),
+    const { data, error } = await resend.emails.send({
+      from: 'RideAdmin <onboarding@resend.dev>',
+      to,
+      subject,
+      html,
     });
 
-    if (!response.ok) {
-      throw new Error(`FormSubmit responded with ${response.status}`);
+    if (error) {
+      throw new Error(error.message);
     }
 
-    logger.info(`Email sent to ${to}`);
-    return { success: true };
+    logger.info(`Email sent to ${to}: ${data?.id}`);
+    return { success: true, messageId: data?.id };
   } catch (err) {
     logger.error(`Email send failed: ${err.message}`);
     throw err;
@@ -84,7 +81,7 @@ const sendPasswordChangeConfirmation = async (email) => {
   });
 };
 
-const sendLoginNotification = async (email, { ip, device, browser, os, location, time }) => {
+const sendLoginNotification = async (email, data) => {
   return Promise.resolve();
 };
 
