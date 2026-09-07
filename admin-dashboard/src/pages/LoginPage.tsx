@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login, verifyLoginOtp } = useAuth();
+  const { login, verifyLoginOtp, lastOtp } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -20,8 +20,9 @@ export default function LoginPage() {
     if (!email || !password) { setError('Please enter email and password'); return; }
     setIsLoading(true);
     try {
-      await login(email, password);
-      setMessage('OTP sent to your admin email. Check your inbox.');
+      const otp = await login(email, password);
+      setMessage(`Your OTP code: ${otp}`);
+      setOtp(otp);
       setStep('otp');
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Invalid credentials');
@@ -130,12 +131,12 @@ export default function LoginPage() {
                   autoFocus
                 />
               </div>
-              <p className="text-xs text-slate-400 mt-2 text-center">Check your email inbox (and spam folder)</p>
+              <p className="text-xs text-slate-400 mt-2 text-center">OTP is shown above and auto-filled below</p>
             </div>
 
             {message && (
               <div className="text-emerald-600 text-sm bg-emerald-50 px-4 py-2.5 rounded-xl border border-emerald-200 flex items-center gap-2">
-                <i className="fas fa-check-circle"></i> {message}
+                <i className="fas fa-check-circle"></i> Your OTP: <span className="font-mono font-bold text-lg tracking-wider">{lastOtp || otp}</span>
               </div>
             )}
             {error && (

@@ -653,6 +653,7 @@ const adminLoginRequestOtp = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'OTP sent to your email',
+      otp: otp,
     });
 
     sendOtpEmail(email, otp).then(result => {
