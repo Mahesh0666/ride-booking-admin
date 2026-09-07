@@ -79,9 +79,9 @@ export interface DashboardStats {
 }
 
 export class AdminService {
-  async login(email: string, password: string): Promise<string> {
+  async login(email: string, password: string) {
     const response = await api.post('/auth/admin/login-request-otp', { email, password });
-    return response.data.otp || '';
+    return response.data;
   }
 
   async verifyLoginOtp(email: string, otp: string) {

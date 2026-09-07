@@ -14,10 +14,9 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<string>;
+  login: (email: string, password: string) => Promise<void>;
   verifyLoginOtp: (email: string, otp: string) => Promise<void>;
   logout: () => void;
-  lastOtp: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,7 +31,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastOtp, setLastOtp] = useState<string | null>(null);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('admin_token');
@@ -59,9 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    const otp = await adminService.login(email, password);
-    setLastOtp(otp);
-    return email;
+    await adminService.login(email, password);
   };
 
   const verifyLoginOtp = async (email: string, otp: string) => {
@@ -80,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, verifyLoginOtp, logout, lastOtp }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, verifyLoginOtp, logout }}>
       {children}
     </AuthContext.Provider>
   );

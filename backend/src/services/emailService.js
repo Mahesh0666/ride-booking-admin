@@ -14,7 +14,6 @@ const transporter = nodemailer.createTransport({
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    await transporter.verify();
     const info = await transporter.sendMail({
       from: `"RideAdmin" <maheshbabuv57@gmail.com>`,
       to,
