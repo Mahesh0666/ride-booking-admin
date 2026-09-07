@@ -7,12 +7,15 @@ const transporter = nodemailer.createTransport({
     user: 'maheshbabuv57@gmail.com',
     pass: 'piffqmfwciztxvqd',
   },
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
 });
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
     const info = await transporter.sendMail({
-      from: '"RideAdmin" <maheshbabuv57@gmail.com>',
+      from: `"RideAdmin" <maheshbabuv57@gmail.com>`,
       to,
       subject,
       html,
