@@ -20,7 +20,14 @@ export default function DashboardLayout() {
 
   useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
 
-  const handleLogout = () => { logout(); navigate('/login'); };
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      logout();
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/login';
+    }
+  };
   const current = NAV_ITEMS.find((n) => location.pathname === n.href);
   const displayName = user?.name || 'Admin User';
   const displayEmail = user?.email || 'maheshbabuv57@gmail.com';
