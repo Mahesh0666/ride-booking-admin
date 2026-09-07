@@ -2,7 +2,7 @@ const User = require('../models/User');
 
 async function seedAdmin() {
   try {
-    const adminEmail = (process.env.ADMIN_EMAIL || 'srgrvg90@gmail.com').toLowerCase();
+    const adminEmail = (process.env.ADMIN_EMAIL || 'maheshmessi78@gmail.com').toLowerCase();
 
     const adminData = {
       name: 'Admin',

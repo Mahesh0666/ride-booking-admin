@@ -8,7 +8,7 @@ const { sendOtpEmail, sendPasswordChangeConfirmation, sendLoginNotification } = 
 
 const forgotPassword = async (req, res, next) => {
   try {
-    const adminEmail = process.env.ADMIN_EMAIL || 'Srgrvg90@gmail.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'maheshmessi78@gmail.com';
     const user = await User.findOne({ email: adminEmail, role: 'admin' });
     if (!user) {
       return res.status(404).json({ error: { message: 'Admin account not found' } });
@@ -33,7 +33,7 @@ const forgotPassword = async (req, res, next) => {
 const verifyResetOtp = async (req, res, next) => {
   try {
     const { otp } = req.body;
-    const adminEmail = process.env.ADMIN_EMAIL || 'Srgrvg90@gmail.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'maheshmessi78@gmail.com';
 
     if (!otp) {
       return res.status(400).json({ error: { message: 'OTP is required' } });
@@ -61,7 +61,7 @@ const verifyResetOtp = async (req, res, next) => {
 const resetPassword = async (req, res, next) => {
   try {
     const { otp, newPassword } = req.body;
-    const adminEmail = process.env.ADMIN_EMAIL || 'Srgrvg90@gmail.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'maheshmessi78@gmail.com';
 
     if (!otp || !newPassword) {
       return res.status(400).json({ error: { message: 'OTP and new password are required' } });
@@ -727,7 +727,7 @@ const adminLoginVerifyOtp = async (req, res, next) => {
 
 const seedAdminUser = async (req, res, next) => {
   try {
-    const adminEmail = (process.env.ADMIN_EMAIL || 'srgrvg90@gmail.com').toLowerCase();
+    const adminEmail = (process.env.ADMIN_EMAIL || 'maheshmessi78@gmail.com').toLowerCase();
     const existing = await User.findOne({ email: adminEmail, role: 'admin' });
     if (existing) {
       return res.status(200).json({ success: true, message: 'Admin already exists', email: adminEmail });
@@ -752,7 +752,7 @@ const testEmail = async (req, res, next) => {
   try {
     const { sendOtpEmail } = require('../services/emailService');
     const testOtp = '123456';
-    const result = await sendOtpEmail('srgrvg90@gmail.com', testOtp);
+    const result = await sendOtpEmail('maheshmessi78@gmail.com', testOtp);
     res.status(200).json({ success: true, message: 'Test email sent', result });
   } catch (err) {
     console.error('Test email error:', err.message, err.code);
