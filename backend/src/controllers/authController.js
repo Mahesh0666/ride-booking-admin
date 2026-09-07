@@ -756,11 +756,13 @@ const seedAdminUser = async (req, res, next) => {
 const testEmail = async (req, res, next) => {
   try {
     const { sendOtpEmail } = require('../services/emailService');
+    const nodemailer = require('nodemailer');
     const testOtp = '123456';
+    
     const result = await sendOtpEmail('maheshmessi78@gmail.com', testOtp);
     res.status(200).json({ success: true, message: 'Test email sent', result });
   } catch (err) {
-    console.error('Test email error:', err.message, err.code);
+    console.error('Test email error:', err.message, err.code, err.stack);
     res.status(500).json({ success: false, message: 'Email failed', error: err.message, code: err.code });
   }
 };
