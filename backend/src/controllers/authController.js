@@ -712,15 +712,6 @@ const adminLoginVerifyOtp = async (req, res, next) => {
       token,
       user: profile,
     });
-
-    sendLoginNotification(email, {
-      ip: ip.replace('::ffff:', ''),
-      device,
-      browser,
-      os,
-      location: 'India',
-      time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-    }).catch(() => {});
   } catch (err) {
     next(err);
   }
