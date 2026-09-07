@@ -1,29 +1,26 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
 
-const resendKey = process.env.RESEND_API_KEY;
-logger.info(`Resend API key loaded: ${resendKey ? 'yes (length: ' + resendKey.length + ')' : 'NO'}`);
-
-const resend = new Resend(resendKey);
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'maheshbabuv57@gmail.com',
+    pass: 'piffqmfwciztxvqd',
+  },
+});
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    const result = await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: [to],
+    const info = await transporter.sendMail({
+      from: '"RideAdmin" <maheshbabuv57@gmail.com>',
+      to,
       subject,
       html,
     });
-
-    if (result.error) {
-      logger.error(`Resend API error: ${JSON.stringify(result.error)}`);
-      throw new Error(result.error.message);
-    }
-
-    logger.info(`Email sent to ${to}: ${result.data?.id}`);
-    return { success: true, messageId: result.data?.id };
+    logger.info(`Email sent to ${to}: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
   } catch (err) {
-    logger.error(`Email send failed: ${err.message}`);
+    logger.error(`Email send failed: ${err.message} (code: ${err.code})`);
     throw err;
   }
 };
