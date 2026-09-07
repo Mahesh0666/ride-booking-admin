@@ -1,25 +1,31 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: 'smtp.resend.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: 'resend',
+    pass: process.env.RESEND_API_KEY,
+  },
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 15000,
+});
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    const { data, error } = await resend.emails.send({
+    const info = await transporter.sendMail({
       from: 'RideAdmin <onboarding@resend.dev>',
       to,
       subject,
       html,
     });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    logger.info(`Email sent to ${to}: ${data?.id}`);
-    return { success: true, messageId: data?.id };
+    logger.info(`Email sent to ${to}: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
   } catch (err) {
-    logger.error(`Email send failed: ${err.message}`);
+    logger.error(`Email send failed: ${err.message} (code: ${err.code})`);
     throw err;
   }
 };
