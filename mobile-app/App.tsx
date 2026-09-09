@@ -5,8 +5,16 @@ import { RideProvider } from './src/context/RideContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { registerForPushNotifications, addNotificationListeners } from './src/services/pushNotificationService';
 
 export default function App() {
+  useEffect(() => {
+    registerForPushNotifications();
+    const cleanup = addNotificationListeners();
+    return cleanup;
+  }, []);
+
   return (
     <AuthProvider>
       <RideProvider>

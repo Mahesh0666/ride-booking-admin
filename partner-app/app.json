@@ -62,7 +62,14 @@
           "isAndroidForegroundServiceEnabled": true
         }
       ],
-      "expo-image-picker"
+      "expo-image-picker",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#4361ee"
+        }
+      ]
     ],
     "extra": {
       "apiUrl": "https://ride-booking-api-r62q.onrender.com/api"
