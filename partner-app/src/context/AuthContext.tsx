@@ -1,10 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { API_BASE_URL } from '../constants/config';
+import { API_BASE_URL, FIREBASE_API_KEY } from '../constants/config';
 import socketService from '../services/socketService';
-import { auth } from '../config/firebase';
-import { signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 
 interface Driver {
   _id: string;
@@ -59,7 +57,7 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [sessionInfo, setSessionInfo] = useState<string | null>(null);
 
   useEffect(() => {
     bootstrapAsync();
@@ -150,66 +148,74 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const otpLogin = {
     requestOtp: async (phone: string) => {
-      try {
-        const formattedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
-        const confirmation = await signInWithPhoneNumber(auth, formattedPhone);
-        setConfirmationResult(confirmation);
-        return { success: true, message: 'OTP sent' };
-      } catch (err: any) {
-        console.error('Firebase send OTP error:', err);
-        throw new Error(err.message || 'Failed to send OTP');
-      }
+      const formattedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
+
+      const res = await axios.post(
+        `https://identitytoolkit.googleapis.com/v1/accounts:sendVerificationCode?key=${FIREBASE_API_KEY}`,
+        {
+          phoneNumber: formattedPhone,
+          recaptchaToken: '',
+        }
+      );
+
+      setSessionInfo(res.data.sessionInfo);
+      return { success: true, message: 'OTP sent' };
     },
     verifyOtp: async (phone: string, otp: string) => {
-      try {
-        if (!confirmationResult) {
-          throw new Error('No OTP request pending. Please request OTP first.');
-        }
-
-        const result = await confirmationResult.confirm(otp);
-        const idToken = await result.user.getIdToken();
-
-        const res = await axios.post(`${API_BASE_URL}/auth/firebase/login`, {
-          idToken,
-          role: 'driver',
-        });
-        const data = res.data;
-
-        if (data.token && data.user) {
-          await setAuth(data.token, data.user);
-        }
-
-        setConfirmationResult(null);
-        return { isNewUser: false, ...data };
-      } catch (err: any) {
-        console.error('Firebase verify OTP error:', err);
-        throw new Error(err.message || 'Invalid OTP');
+      if (!sessionInfo) {
+        throw new Error('No OTP request pending. Please request OTP first.');
       }
+
+      const verifyRes = await axios.post(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPhoneNumber?key=${FIREBASE_API_KEY}`,
+        {
+          sessionInfo,
+          code: otp,
+        }
+      );
+
+      const idToken = verifyRes.data.idToken;
+
+      const res = await axios.post(`${API_BASE_URL}/auth/firebase/login`, {
+        idToken,
+        role: 'driver',
+      });
+      const data = res.data;
+
+      if (data.token && data.user) {
+        await setAuth(data.token, data.user);
+      }
+
+      setSessionInfo(null);
+      return { isNewUser: false, ...data };
     },
     registerNew: async (phone: string, name: string) => {
-      try {
-        if (!confirmationResult) {
-          throw new Error('No OTP request pending. Please request OTP first.');
-        }
-
-        const idToken = await confirmationResult.user.getIdToken();
-
-        const res = await axios.post(`${API_BASE_URL}/auth/firebase/register`, {
-          idToken,
-          role: 'driver',
-          name,
-        });
-        const data = res.data;
-
-        if (data.token && data.user) {
-          await setAuth(data.token, data.user);
-        }
-
-        setConfirmationResult(null);
-      } catch (err: any) {
-        console.error('Firebase register error:', err);
-        throw new Error(err.message || 'Registration failed');
+      if (!sessionInfo) {
+        throw new Error('No OTP request pending. Please request OTP first.');
       }
+
+      const verifyRes = await axios.post(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPhoneNumber?key=${FIREBASE_API_KEY}`,
+        {
+          sessionInfo,
+          code: phone,
+        }
+      );
+
+      const idToken = verifyRes.data.idToken;
+
+      const res = await axios.post(`${API_BASE_URL}/auth/firebase/register`, {
+        idToken,
+        role: 'driver',
+        name,
+      });
+      const data = res.data;
+
+      if (data.token && data.user) {
+        await setAuth(data.token, data.user);
+      }
+
+      setSessionInfo(null);
     },
   };
 

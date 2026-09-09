@@ -1,5 +1,6 @@
 const API_BASE_URL = 'https://ride-booking-api-r62q.onrender.com/api';
 const GOOGLE_MAPS_API_KEY = '';
+const FIREBASE_API_KEY = 'AIzaSyCCVUsWVQfNHQdDJ8J9SsJHQUhsoR3XTLo';
 
 const COLORS = {
   primary: '#4361ee',
@@ -52,4 +53,4 @@ const RIDER_STATUS_COLORS: Record<string, string> = {
   scheduled: '#8d99ae',
 };
 
-export { API_BASE_URL, GOOGLE_MAPS_API_KEY, COLORS, VEHICLE_ICONS, CAB_VEHICLE_TYPES, RIDER_STATUS_COLORS };
+export { API_BASE_URL, GOOGLE_MAPS_API_KEY, FIREBASE_API_KEY, COLORS, VEHICLE_ICONS, CAB_VEHICLE_TYPES, RIDER_STATUS_COLORS };

@@ -1,4 +1,5 @@
 const API_BASE_URL = 'https://ride-booking-api-r62q.onrender.com/api';
+const FIREBASE_API_KEY = 'AIzaSyCCVUsWVQfNHQdDJ8J9SsJHQUhsoR3XTLo';
 
 const COLORS = {
   primary: '#4361ee',
@@ -29,4 +30,4 @@ const DRIVER_STATUS_COLORS = {
   cancelled: '#ef4444',
 };
 
-export { API_BASE_URL, COLORS, VEHICLE_ICONS, DRIVER_STATUS_COLORS };
+export { API_BASE_URL, FIREBASE_API_KEY, COLORS, VEHICLE_ICONS, DRIVER_STATUS_COLORS };
