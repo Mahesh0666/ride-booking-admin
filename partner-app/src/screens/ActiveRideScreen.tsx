@@ -208,7 +208,7 @@ export default function ActiveRideScreen({ navigation, route }: any) {
           <View style={styles.fareDivider} />
           <View style={styles.fareRow}>
             <Text style={styles.fareLabelBold}>Your earnings</Text>
-            <Text style={styles.fareValueBold}>₹{(ride.fare * 0.9).toFixed(2)}</Text>
+            <Text style={styles.fareValueBold}>₹{(ride.fare * 0.75).toFixed(2)}</Text>
           </View>
         </View>
 

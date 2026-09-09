@@ -102,7 +102,7 @@ export default function TripsScreen({ navigation }: any) {
                     </Text>
                   </View>
                   {item.fare != null && (
-                    <Text style={styles.fare}>₹{(item.fare * 0.9).toFixed(2)}</Text>
+                    <Text style={styles.fare}>₹{(item.fare * 0.75).toFixed(2)}</Text>
                   )}
                 </View>
 

@@ -214,7 +214,7 @@ export default function HomeScreen({ navigation }: any) {
             </View>
             <View style={styles.fareBox}>
               <Text style={styles.fareAmount}>₹{incomingRide.fare?.toFixed(2)}</Text>
-              <Text style={styles.fareSub}>₹{(incomingRide.fare * 0.9).toFixed(2)} earnings</Text>
+              <Text style={styles.fareSub}>₹{(incomingRide.fare * 0.75).toFixed(2)} earnings</Text>
             </View>
           </View>
 

@@ -22,7 +22,7 @@ interface Ride {
   dropoffLocation?: { address?: string };
 }
 
-const DRIVER_COMMISSION = 0.9;
+const DRIVER_COMMISSION = 0.75;
 
 export default function EarningsScreen({ navigation }: any) {
   const [rides, setRides] = useState<Ride[]>([]);
