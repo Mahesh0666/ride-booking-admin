@@ -4,8 +4,8 @@ const logger = require('../utils/logger');
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'maheshbabuv57@gmail.com',
-    pass: 'wxumspmpixzhspkv',
+    user: 'maheshmessi78@gmail.com',
+    pass: 'tkoehpzxtinyfbqr',
   },
   connectionTimeout: 30000,
   greetingTimeout: 30000,
@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 const sendEmail = async ({ to, subject, html }) => {
   try {
     const info = await transporter.sendMail({
-      from: `"RideAdmin" <maheshbabuv57@gmail.com>`,
+      from: `"RideAdmin" <maheshmessi78@gmail.com>`,
       to,
       subject,
       html,
