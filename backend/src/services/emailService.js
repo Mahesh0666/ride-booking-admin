@@ -7,7 +7,7 @@ const sendEmail = async ({ to, subject, html }) => {
   try {
     const msg = {
       to,
-      from: 'maheshmessi78@gmail.com',
+      from: 'careers@bumblejobs.com',
       subject,
       html,
     };
