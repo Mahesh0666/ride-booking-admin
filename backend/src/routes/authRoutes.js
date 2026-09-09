@@ -25,10 +25,14 @@ const {
   adminLoginVerifyOtp,
   seedAdminUser,
   testEmail,
+  firebaseLogin,
+  firebaseRegister,
 } = require('../controllers/authController');
 
 router.post('/register', register);
 router.post('/login', login);
+router.post('/firebase/login', firebaseLogin);
+router.post('/firebase/register', firebaseRegister);
 router.post('/admin/login-request-otp', adminLoginRequestOtp);
 router.post('/admin/login-verify-otp', adminLoginVerifyOtp);
 router.post('/otp/request', otpRequestLimiter, requestOtp);

@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_BASE_URL } from '../constants/config';
 import socketService from '../services/socketService';
+import { auth } from '../config/firebase';
+import { signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 
 interface Driver {
   _id: string;
@@ -57,6 +59,7 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   useEffect(() => {
     bootstrapAsync();
@@ -147,22 +150,65 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const otpLogin = {
     requestOtp: async (phone: string) => {
-      const res = await axios.post(`${API_BASE_URL}/auth/otp/request`, { phone, role: 'driver' });
-      return res.data;
+      try {
+        const formattedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
+        const confirmation = await signInWithPhoneNumber(auth, formattedPhone);
+        setConfirmationResult(confirmation);
+        return { success: true, message: 'OTP sent' };
+      } catch (err: any) {
+        console.error('Firebase send OTP error:', err);
+        throw new Error(err.message || 'Failed to send OTP');
+      }
     },
     verifyOtp: async (phone: string, otp: string) => {
-      const res = await axios.post(`${API_BASE_URL}/auth/otp/verify`, { phone, otp, role: 'driver' });
-      const data = res.data;
-      if (!data.isNewUser && data.token && data.user) {
-        await setAuth(data.token, data.user);
+      try {
+        if (!confirmationResult) {
+          throw new Error('No OTP request pending. Please request OTP first.');
+        }
+
+        const result = await confirmationResult.confirm(otp);
+        const idToken = await result.user.getIdToken();
+
+        const res = await axios.post(`${API_BASE_URL}/auth/firebase/login`, {
+          idToken,
+          role: 'driver',
+        });
+        const data = res.data;
+
+        if (data.token && data.user) {
+          await setAuth(data.token, data.user);
+        }
+
+        setConfirmationResult(null);
+        return { isNewUser: false, ...data };
+      } catch (err: any) {
+        console.error('Firebase verify OTP error:', err);
+        throw new Error(err.message || 'Invalid OTP');
       }
-      return data;
     },
     registerNew: async (phone: string, name: string) => {
-      const res = await axios.post(`${API_BASE_URL}/auth/otp/register`, { phone, name, role: 'driver' });
-      const data = res.data;
-      if (data.token && data.user) {
-        await setAuth(data.token, data.user);
+      try {
+        if (!confirmationResult) {
+          throw new Error('No OTP request pending. Please request OTP first.');
+        }
+
+        const idToken = await confirmationResult.user.getIdToken();
+
+        const res = await axios.post(`${API_BASE_URL}/auth/firebase/register`, {
+          idToken,
+          role: 'driver',
+          name,
+        });
+        const data = res.data;
+
+        if (data.token && data.user) {
+          await setAuth(data.token, data.user);
+        }
+
+        setConfirmationResult(null);
+      } catch (err: any) {
+        console.error('Firebase register error:', err);
+        throw new Error(err.message || 'Registration failed');
       }
     },
   };

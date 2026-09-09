@@ -764,6 +764,120 @@ const testEmail = async (req, res, next) => {
   }
 };
 
+const firebaseLogin = async (req, res, next) => {
+  try {
+    const { idToken, role = 'rider', name } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({ error: { message: 'Firebase ID token is required' } });
+    }
+
+    const firebaseProvider = require('../services/otpProviders/firebase');
+    const decoded = await firebaseProvider.verifyIdToken(idToken);
+
+    if (!decoded.phone) {
+      return res.status(400).json({ error: { message: 'Phone number not found in token' } });
+    }
+
+    const phone = decoded.phone.replace('+91', '');
+    const isDriver = role === 'driver';
+
+    let user = await User.findOne({ phone, role });
+
+    if (!user) {
+      user = await User.create({
+        name: name || `User ${phone.slice(-4)}`,
+        phone,
+        email: decoded.email || `${phone}@otp.local`,
+        password: crypto.randomBytes(24).toString('hex'),
+        role,
+        isDriver,
+        onboardingStatus: isDriver ? 'not_started' : 'approved',
+        isVerified: true,
+      });
+    }
+
+    user.isOnline = true;
+    await user.save({ validateBeforeSave: false });
+
+    const token = generateToken(user._id);
+    const populated = await User.findById(user._id).populate('vehicle');
+    const profile = populated.toProfileJSON();
+    profile.vehicle = populated.vehicle;
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: profile,
+      isNewUser: false,
+    });
+  } catch (err) {
+    console.error('Firebase login error:', err.message);
+    next(err);
+  }
+};
+
+const firebaseRegister = async (req, res, next) => {
+  try {
+    const { idToken, role = 'rider', name } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({ error: { message: 'Firebase ID token is required' } });
+    }
+
+    if (!name) {
+      return res.status(400).json({ error: { message: 'Name is required' } });
+    }
+
+    const firebaseProvider = require('../services/otpProviders/firebase');
+    const decoded = await firebaseProvider.verifyIdToken(idToken);
+
+    if (!decoded.phone) {
+      return res.status(400).json({ error: { message: 'Phone number not found in token' } });
+    }
+
+    const phone = decoded.phone.replace('+91', '');
+    const isDriver = role === 'driver';
+
+    const existing = await User.findOne({ phone, role });
+    if (existing) {
+      existing.isOnline = true;
+      await existing.save({ validateBeforeSave: false });
+      const token = generateToken(existing._id);
+      const populated = await User.findById(existing._id).populate('vehicle');
+      const profile = populated.toProfileJSON();
+      profile.vehicle = populated.vehicle;
+      return res.status(200).json({ success: true, token, user: profile, isNewUser: false });
+    }
+
+    const user = await User.create({
+      name,
+      phone,
+      email: decoded.email || `${phone}@otp.local`,
+      password: crypto.randomBytes(24).toString('hex'),
+      role,
+      isDriver,
+      onboardingStatus: isDriver ? 'not_started' : 'approved',
+      isVerified: true,
+    });
+
+    const token = generateToken(user._id);
+    const populated = await User.findById(user._id).populate('vehicle');
+    const profile = populated.toProfileJSON();
+    profile.vehicle = populated.vehicle;
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: profile,
+      isNewUser: true,
+    });
+  } catch (err) {
+    console.error('Firebase register error:', err.message);
+    next(err);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -787,4 +901,6 @@ module.exports = {
   adminLoginVerifyOtp,
   seedAdminUser,
   testEmail,
+  firebaseLogin,
+  firebaseRegister,
 };
