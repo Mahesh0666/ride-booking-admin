@@ -22,6 +22,8 @@ import RatingScreen from '../screens/RatingScreen';
 import PickLocationScreen from '../screens/PickLocationScreen';
 import TermsGateScreen from '../screens/TermsGateScreen';
 import LegalScreen from '../screens/LegalScreen';
+import ScheduleRideScreen from '../screens/ScheduleRideScreen';
+import WalletScreen from '../screens/WalletScreen';
 import ActiveRideCard from '../components/ActiveRideCard';
 
 export type RootStackParamList = {
@@ -45,6 +47,8 @@ export type RootStackParamList = {
   Legal: { doc?: string };
   TermsGate: undefined;
   TermsLegal: { doc?: string };
+  ScheduleRide: undefined;
+  Wallet: undefined;
 };
 
 const Tab = createBottomTabNavigator();
@@ -134,6 +138,8 @@ function AppStack() {
       <Stack.Screen name="Rating" component={RatingScreen} />
       <Stack.Screen name="PickLocation" component={PickLocationScreen} />
       <Stack.Screen name="Legal" component={LegalScreen} />
+      <Stack.Screen name="ScheduleRide" component={ScheduleRideScreen} />
+      <Stack.Screen name="Wallet" component={WalletScreen} />
     </Stack.Navigator>
   );
 }

@@ -14,6 +14,8 @@ import api from '../services/apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MENU_ITEMS = [
+  { key: 'Wallet', icon: '💰', label: 'My Wallet', nav: 'Wallet' },
+  { key: 'ScheduleRide', icon: '🕐', label: 'Schedule Ride', nav: 'ScheduleRide' },
   { key: 'SavedAddresses', icon: '📍', label: 'Saved Addresses', nav: 'SavedAddresses' },
   { key: 'Notifications', icon: '🔔', label: 'Notifications', nav: 'Notifications' },
   { key: 'RideHistory', icon: '🧾', label: 'My Rides', nav: 'RideHistory' },

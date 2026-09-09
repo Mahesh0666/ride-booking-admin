@@ -500,6 +500,15 @@ export default function HomeScreen({ navigation }: any) {
                 {pickup && dropoff ? `Book ${VEHICLE_ICONS[selectedVehicle] || ''} Auto` : 'Select pickup & drop'}
               </Text>
             </TouchableOpacity>
+
+            {pickup && dropoff && (
+              <TouchableOpacity
+                style={[styles.bookButton, { backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.primary, marginTop: 8 }]}
+                onPress={() => navigation.navigate('ScheduleRide', { pickup, dropoff, vehicleType: selectedVehicle })}
+              >
+                <Text style={[styles.bookButtonText, { color: COLORS.primary }]}>🕐 Book Later</Text>
+              </TouchableOpacity>
+            )}
           </ScrollView>
         ) : (
           <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
