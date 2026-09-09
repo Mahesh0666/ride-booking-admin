@@ -1,29 +1,24 @@
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 const logger = require('../utils/logger');
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: 'maheshmessi78@gmail.com',
-    pass: 'qpgsoqkaqaynmpmd',
-  },
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 30000,
-});
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    const info = await transporter.sendMail({
-      from: `"RideAdmin" <maheshmessi78@gmail.com>`,
+    const msg = {
       to,
+      from: 'maheshmessi78@gmail.com',
       subject,
       html,
-    });
-    logger.info(`Email sent to ${to}: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+    };
+    const result = await sgMail.send(msg);
+    logger.info(`Email sent to ${to}: ${result[0].statusCode}`);
+    return { success: true, statusCode: result[0].statusCode };
   } catch (err) {
-    logger.error(`Email send failed: ${err.message} (code: ${err.code})`);
+    logger.error(`Email send failed: ${err.message}`);
+    if (err.response) {
+      logger.error(`SendGrid error body: ${JSON.stringify(err.response.body)}`);
+    }
     throw err;
   }
 };
