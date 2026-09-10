@@ -878,6 +878,156 @@ const firebaseRegister = async (req, res, next) => {
   }
 };
 
+const twilioRequestOtp = async (req, res, next) => {
+  try {
+    const phone = String(req.body.phone || '').replace(/\D/g, '');
+    const role = req.body.role || 'rider';
+
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({ error: { message: 'Enter a valid 10-digit phone number' } });
+    }
+    if (!['rider', 'driver'].includes(role)) {
+      return res.status(400).json({ error: { message: 'Invalid account type' } });
+    }
+
+    const { requestId, provider, expiresInSeconds } = await otpService.requestOtp({
+      phone,
+      role,
+      ip: req.ip,
+    });
+
+    console.log(
+      `[twilio-otp] request id=${requestId} phone=${otpService.maskPhone(phone)} role=${role} provider=${provider}`
+    );
+
+    res.status(200).json({
+      success: true,
+      requestId,
+      expiresInSeconds,
+    });
+  } catch (err) {
+    if (err instanceof otpService.OtpServiceError) {
+      return res.status(err.statusCode).json({ error: { message: err.message } });
+    }
+    next(err);
+  }
+};
+
+const twilioVerifyOtp = async (req, res, next) => {
+  try {
+    const phone = String(req.body.phone || '').replace(/\D/g, '');
+    const otp = String(req.body.otp || '');
+    const role = req.body.role || 'rider';
+
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({ error: { message: 'Enter a valid 10-digit phone number' } });
+    }
+    if (!['rider', 'driver'].includes(role)) {
+      return res.status(400).json({ error: { message: 'Invalid account type' } });
+    }
+
+    const result = await otpService.verifyOtp({ phone, role, otp, ip: req.ip });
+
+    let user = await User.findOne({ phone, role });
+    let isNewUser = !user;
+
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        isNewUser: true,
+        requestId: result.requestId,
+      });
+    }
+
+    await otpService.consume(phone, role);
+
+    user.isOnline = true;
+    await user.save({ validateBeforeSave: false });
+
+    const token = generateToken(user._id);
+    const populated = await User.findById(user._id).populate('vehicle');
+    const profile = populated.toProfileJSON();
+    profile.vehicle = populated.vehicle;
+
+    res.status(200).json({
+      success: true,
+      isNewUser: false,
+      requestId: result.requestId,
+      token,
+      user: profile,
+    });
+  } catch (err) {
+    if (err instanceof otpService.OtpServiceError) {
+      return res.status(err.statusCode).json({ error: { message: err.message } });
+    }
+    next(err);
+  }
+};
+
+const twilioRegisterUser = async (req, res, next) => {
+  try {
+    const phone = String(req.body.phone || '').replace(/\D/g, '');
+    const name = String(req.body.name || '').trim();
+    const role = req.body.role || 'rider';
+
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({ error: { message: 'Enter a valid 10-digit phone number' } });
+    }
+    if (!name) {
+      return res.status(400).json({ error: { message: 'Please enter your name' } });
+    }
+    if (!['rider', 'driver'].includes(role)) {
+      return res.status(400).json({ error: { message: 'Invalid account type' } });
+    }
+
+    const existingUser = await User.findOne({ phone, role });
+    if (existingUser) {
+      return res.status(409).json({
+        error: { message: 'An account already exists with this phone number. Please log in instead.' },
+      });
+    }
+
+    await otpService.consume(phone, role);
+
+    const isDriver = role === 'driver';
+    const user = await User.create({
+      name,
+      phone,
+      email: isDriver ? `${phone}@driver.otp.local` : `${phone}@otp.local`,
+      password: crypto.randomBytes(24).toString('hex'),
+      role,
+      isDriver,
+      onboardingStatus: isDriver ? 'not_started' : 'approved',
+      isVerified: true,
+    });
+
+    user.isOnline = true;
+    await user.save({ validateBeforeSave: false });
+
+    const token = generateToken(user._id);
+    const populated = await User.findById(user._id).populate('vehicle');
+    const profile = populated.toProfileJSON();
+    profile.vehicle = populated.vehicle;
+
+    res.status(201).json({
+      success: true,
+      isNewUser: true,
+      token,
+      user: profile,
+    });
+  } catch (err) {
+    if (err instanceof otpService.OtpServiceError) {
+      return res.status(err.statusCode).json({ error: { message: err.message } });
+    }
+    if (err.code === 11000) {
+      return res.status(409).json({
+        error: { message: 'An account already exists with this phone number. Please log in instead.' },
+      });
+    }
+    next(err);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -903,4 +1053,7 @@ module.exports = {
   testEmail,
   firebaseLogin,
   firebaseRegister,
+  twilioRequestOtp,
+  twilioVerifyOtp,
+  twilioRegisterUser,
 };

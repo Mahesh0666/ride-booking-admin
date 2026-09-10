@@ -27,12 +27,18 @@ const {
   testEmail,
   firebaseLogin,
   firebaseRegister,
+  twilioRequestOtp,
+  twilioVerifyOtp,
+  twilioRegisterUser,
 } = require('../controllers/authController');
 
 router.post('/register', register);
 router.post('/login', login);
 router.post('/firebase/login', firebaseLogin);
 router.post('/firebase/register', firebaseRegister);
+router.post('/twilio/otp/request', otpRequestLimiter, twilioRequestOtp);
+router.post('/twilio/otp/verify', otpVerifyLimiter, twilioVerifyOtp);
+router.post('/twilio/otp/register', otpVerifyLimiter, twilioRegisterUser);
 router.post('/admin/login-request-otp', adminLoginRequestOtp);
 router.post('/admin/login-verify-otp', adminLoginVerifyOtp);
 router.post('/otp/request', otpRequestLimiter, requestOtp);

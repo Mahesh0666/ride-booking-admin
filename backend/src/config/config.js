@@ -27,5 +27,10 @@ module.exports = {
       templateId: process.env.MSG91_TEMPLATE_ID,
       baseUrl: process.env.MSG91_BASE_URL || 'https://control.msg91.com',
     },
+    twilio: {
+      accountSid: process.env.TWILIO_ACCOUNT_SID,
+      authToken: process.env.TWILIO_AUTH_TOKEN,
+      verifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID,
+    },
   },
 };
