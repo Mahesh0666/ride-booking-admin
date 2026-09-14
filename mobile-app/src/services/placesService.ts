@@ -35,6 +35,9 @@ export const autocompleteAddresses = async (
         countrycodes: 'in',
         'accept-language': 'en',
       },
+      headers: {
+        'User-Agent': 'RideBookApp/1.0 (contact:maheshmessi78@gmail.com)',
+      },
       timeout: 8000,
     });
 
@@ -96,6 +99,9 @@ export const reverseGeocode = async (
         format: 'json',
         zoom: 18,
         'accept-language': 'en',
+      },
+      headers: {
+        'User-Agent': 'RideBookApp/1.0 (contact:maheshmessi78@gmail.com)',
       },
       timeout: 8000,
     });

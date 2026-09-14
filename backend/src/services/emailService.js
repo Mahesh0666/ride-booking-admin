@@ -1,7 +1,9 @@
 const sgMail = require('@sendgrid/mail');
 const logger = require('../utils/logger');
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
@@ -48,7 +50,7 @@ const sendOtpEmail = async (email, otp) => {
   `;
   return sendEmail({
     to: email,
-    subject: `[RideAdmin] Your OTP Code: ${otp}`,
+    subject: '[RideAdmin] Your Login Verification Code',
     html,
   });
 };

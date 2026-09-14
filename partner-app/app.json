@@ -24,10 +24,7 @@
         "NSLocationWhenInUseUsageDescription": "Ride-Book Partner uses your location while you're online so you receive nearby ride requests and riders can track your arrival.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Ride-Book Partner continues using your location in the background while you're online so you receive nearby ride requests.",
         "NSCameraUsageDescription": "Ride-Book Partner uses the camera to capture your driving licence, vehicle documents, and profile photo.",
-        "NSPhotoLibraryUsageDescription": "Ride-Book Partner accesses your photo library so you can upload your vehicle and licence documents.",
-        "UIBackgroundModes": [
-          "location"
-        ]
+        "NSPhotoLibraryUsageDescription": "Ride-Book Partner accesses your photo library so you can upload your vehicle and licence documents."
       }
     },
     "android": {
@@ -46,7 +43,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": ""
+          "apiKey": "AIzaSyCCVUsWVQfNHQdDJ8J9SsJHQUhsoR3XTLo"
         }
       }
     },
@@ -57,22 +54,20 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Ride-Book Partner uses your location while you're online so you receive nearby ride requests.",
-          "locationAlwaysAndWhenInUsePermission": "Ride-Book Partner uses your location in the background while you're online so you receive nearby ride requests.",
+          "locationAlwaysAndWhenInUsePermission": "Ride-Book Partner continues using your location in the background while you're online so you receive nearby ride requests.",
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
         }
       ],
       "expo-image-picker",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#4361ee"
-        }
-      ]
+      "expo-task-manager"
     ],
+    "owner": "maheshmessi48",
     "extra": {
-      "apiUrl": "https://ride-booking-api-r62q.onrender.com/api"
+      "apiUrl": "https://ride-booking-api-r62q.onrender.com/api",
+      "eas": {
+        "projectId": "cf0ab730-137c-49cc-be59-621f134782fa"
+      }
     }
   }
 }

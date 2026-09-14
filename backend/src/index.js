@@ -1,5 +1,7 @@
 const dotenv = require('dotenv');
 const path = require('path');
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 dotenv.config({ path: path.resolve(__dirname, '..', `.env.${nodeEnv}`) });

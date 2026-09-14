@@ -40,7 +40,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": ""
+          "apiKey": "AIzaSyCCVUsWVQfNHQdDJ8J9SsJHQUhsoR3XTLo"
         }
       }
     },
@@ -52,18 +52,15 @@
         {
           "locationWhenInUsePermission": "Ride-Book uses your location only when you choose it, to set pickup or drop-off points for your ride."
         }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#4361ee"
-        }
       ]
     ],
+    "owner": "maheshmessi48",
     "extra": {
       "apiUrl": "https://ride-booking-api-r62q.onrender.com/api",
-      "googleMapsApiKey": ""
+      "googleMapsApiKey": "AIzaSyCCVUsWVQfNHQdDJ8J9SsJHQUhsoR3XTLo",
+      "eas": {
+        "projectId": "b350823c-d69b-4597-bc07-3421c5d0e82b"
+      }
     }
   }
 }

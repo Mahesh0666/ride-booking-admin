@@ -6,13 +6,19 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { registerForPushNotifications, addNotificationListeners } from './src/services/pushNotificationService';
 
 export default function App() {
   useEffect(() => {
-    registerForPushNotifications();
-    const cleanup = addNotificationListeners();
-    return cleanup;
+    const initPush = async () => {
+      try {
+        const { registerForPushNotifications, addNotificationListeners } = await import('./src/services/pushNotificationService');
+        registerForPushNotifications();
+        addNotificationListeners();
+      } catch (e) {
+        console.warn('Push notifications not available in Expo Go');
+      }
+    };
+    initPush();
   }, []);
 
   return (
