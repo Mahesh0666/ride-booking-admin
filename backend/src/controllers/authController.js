@@ -401,6 +401,7 @@ const updateLocation = async (req, res, next) => {
           type: 'Point',
           coordinates: [parseFloat(lng), parseFloat(lat)],
         },
+        lastLocationAt: new Date(),
       },
       { new: true, runValidators: true }
     ).select('-password');
@@ -1028,6 +1029,21 @@ const twilioRegisterUser = async (req, res, next) => {
   }
 };
 
+const { refreshAccessToken } = require('../utils/generateToken');
+
+const refreshTokenHandler = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({ error: { message: 'Refresh token required' } });
+    }
+    const result = refreshAccessToken(refreshToken);
+    res.status(200).json({ success: true, ...result });
+  } catch (err) {
+    return res.status(401).json({ error: { message: 'Invalid or expired refresh token' } });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -1056,4 +1072,5 @@ module.exports = {
   twilioRequestOtp,
   twilioVerifyOtp,
   twilioRegisterUser,
+  refreshTokenHandler,
 };

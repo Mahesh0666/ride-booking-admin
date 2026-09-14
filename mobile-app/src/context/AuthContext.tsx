@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_BASE_URL } from '../constants/config';
-import { setAuthToken, clearAuthToken, setOnAuthError } from '../services/apiClient';
+import { setAuthToken, setRefreshToken, clearAuthToken, setOnAuthError } from '../services/apiClient';
 
 interface User {
   _id: string;
@@ -52,8 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     bootstrapAsync();
     setOnAuthError(() => {
-      AsyncStorage.removeItem('token');
-      AsyncStorage.removeItem('user');
+      AsyncStorage.multiRemove(['token', 'refreshToken', 'user', 'terms_accepted']);
       clearAuthToken();
       delete axios.defaults.headers.common['Authorization'];
       setToken(null);
@@ -65,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const bootstrapAsync = async () => {
     try {
       const storedToken = await AsyncStorage.getItem('token');
+      const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
       const storedUser = await AsyncStorage.getItem('user');
       const storedTerms = await AsyncStorage.getItem('terms_accepted');
       if (storedTerms === '1') setTermsAccepted(true);
@@ -72,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
         setAuthToken(storedToken);
+        if (storedRefreshToken) setRefreshToken(storedRefreshToken);
         axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
       }
     } catch (err) {
@@ -86,15 +87,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTermsAccepted(true);
   };
 
+  const storeAuth = async (accessToken: string, refreshTokenVal: string | undefined, userData: User) => {
+    await AsyncStorage.setItem('token', accessToken);
+    if (refreshTokenVal) await AsyncStorage.setItem('refreshToken', refreshTokenVal);
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
+    setAuthToken(accessToken);
+    if (refreshTokenVal) setRefreshToken(refreshTokenVal);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+    setToken(accessToken);
+    setUser(userData);
+  };
+
   const login = async (email: string, password: string) => {
     const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
-    const { token: newToken, user: newUser } = response.data;
-    await AsyncStorage.setItem('token', newToken);
-    await AsyncStorage.setItem('user', JSON.stringify(newUser));
-    setAuthToken(newToken);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-    setToken(newToken);
-    setUser(newUser);
+    const { token: accessToken, refreshToken: refreshTokenVal, user: newUser } = response.data;
+    await storeAuth(accessToken, refreshTokenVal, newUser);
   };
 
   const register = async (name: string, email: string, password: string, phone?: string) => {
@@ -105,18 +112,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       phone,
       role: 'rider',
     });
-    const { token: newToken, user: newUser } = response.data;
-    await AsyncStorage.setItem('token', newToken);
-    await AsyncStorage.setItem('user', JSON.stringify(newUser));
-    setAuthToken(newToken);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-    setToken(newToken);
-    setUser(newUser);
+    const { token: accessToken, refreshToken: refreshTokenVal, user: newUser } = response.data;
+    await storeAuth(accessToken, refreshTokenVal, newUser);
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem('token');
-    await AsyncStorage.removeItem('user');
+    await AsyncStorage.multiRemove(['token', 'refreshToken', 'user', 'terms_accepted']);
     clearAuthToken();
     delete axios.defaults.headers.common['Authorization'];
     setToken(null);
@@ -148,12 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = res.data;
 
       if (data.token && data.user) {
-        await AsyncStorage.setItem('token', data.token);
-        await AsyncStorage.setItem('user', JSON.stringify(data.user));
-        setAuthToken(data.token);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-        setToken(data.token);
-        setUser(data.user);
+        await storeAuth(data.token, data.refreshToken, data.user);
       }
 
       return { isNewUser: data.isNewUser, requestId: data.requestId, ...data };
@@ -167,12 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = res.data;
 
       if (data.token && data.user) {
-        await AsyncStorage.setItem('token', data.token);
-        await AsyncStorage.setItem('user', JSON.stringify(data.user));
-        setAuthToken(data.token);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-        setToken(data.token);
-        setUser(data.user);
+        await storeAuth(data.token, data.refreshToken, data.user);
       }
     },
   };

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_BASE_URL } from '../constants/config';
+import { setAuthToken, setRefreshToken, clearAuthToken } from '../services/apiClient';
 import socketService from '../services/socketService';
 
 interface Driver {
@@ -60,17 +61,21 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     bootstrapAsync();
+    return () => {};
   }, []);
 
   const bootstrapAsync = async () => {
     try {
       const storedToken = await AsyncStorage.getItem('driver_token');
+      const storedRefreshToken = await AsyncStorage.getItem('driver_refresh_token');
       const storedDriver = await AsyncStorage.getItem('driver_data');
       const storedTerms = await AsyncStorage.getItem('driver_terms_accepted');
       if (storedTerms === '1') setTermsAccepted(true);
       if (storedToken && storedDriver) {
         setToken(storedToken);
         setDriver(JSON.parse(storedDriver));
+        setAuthToken(storedToken);
+        if (storedRefreshToken) setRefreshToken(storedRefreshToken);
         axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
       }
     } catch (err) {
@@ -85,19 +90,22 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setTermsAccepted(true);
   };
 
-  const setAuth = async (newToken: string, driverData: Driver) => {
-    const withToken = { ...driverData, token: newToken };
-    await AsyncStorage.setItem('driver_token', newToken);
+  const storeAuth = async (accessToken: string, refreshTokenVal: string | undefined, driverData: Driver) => {
+    const withToken = { ...driverData, token: accessToken };
+    await AsyncStorage.setItem('driver_token', accessToken);
+    if (refreshTokenVal) await AsyncStorage.setItem('driver_refresh_token', refreshTokenVal);
     await AsyncStorage.setItem('driver_data', JSON.stringify(withToken));
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-    setToken(newToken);
+    setAuthToken(accessToken);
+    if (refreshTokenVal) setRefreshToken(refreshTokenVal);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+    setToken(accessToken);
     setDriver(withToken);
   };
 
   const login = async (email: string, password: string) => {
     const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
-    const { token: newToken, user: driverData } = response.data;
-    await setAuth(newToken, driverData);
+    const { token: accessToken, refreshToken: refreshTokenVal, user: driverData } = response.data;
+    await storeAuth(accessToken, refreshTokenVal, driverData);
   };
 
   const registerAndOnboard = async (name: string, email: string, password: string, phone: string) => {
@@ -108,15 +116,14 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       phone,
       role: 'driver',
     });
-    const { token: newToken, user: driverData } = response.data;
-    await setAuth(newToken, driverData);
+    const { token: accessToken, refreshToken: refreshTokenVal, user: driverData } = response.data;
+    await storeAuth(accessToken, refreshTokenVal, driverData);
   };
 
   const logout = async () => {
     socketService.disconnect();
-    await AsyncStorage.removeItem('driver_token');
-    await AsyncStorage.removeItem('driver_data');
-    await AsyncStorage.removeItem('driver_terms_accepted');
+    await AsyncStorage.multiRemove(['driver_token', 'driver_refresh_token', 'driver_data', 'driver_terms_accepted']);
+    clearAuthToken();
     delete axios.defaults.headers.common['Authorization'];
     setToken(null);
     setDriver(null);
@@ -162,7 +169,7 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const data = res.data;
 
       if (data.token && data.user) {
-        await setAuth(data.token, data.user);
+        await storeAuth(data.token, data.refreshToken, data.user);
       }
 
       return { isNewUser: data.isNewUser, requestId: data.requestId, ...data };
@@ -176,7 +183,7 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const data = res.data;
 
       if (data.token && data.user) {
-        await setAuth(data.token, data.user);
+        await storeAuth(data.token, data.refreshToken, data.user);
       }
     },
   };

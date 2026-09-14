@@ -12,6 +12,7 @@ const {
   getAllRides,
   deleteUser,
   deleteDriver,
+  getAuditLogs,
 } = require('../controllers/adminController');
 
 router.use(protect);
@@ -42,5 +43,8 @@ router.route('/drivers/:id')
 
 router.route('/rides')
   .get(getAllRides);
+
+router.route('/audit-logs')
+  .get(getAuditLogs);
 
 module.exports = router;

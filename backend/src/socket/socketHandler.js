@@ -4,9 +4,17 @@ const config = require('../config/config');
 const User = require('../models/User');
 const Ride = require('../models/Ride');
 
+const STALE_LOCATION_SECONDS = 120;
+
 const setupSocket = (server) => {
   const allowedOrigins = config.isProduction
-    ? [process.env.ADMIN_DASHBOARD_URL || 'https://admin.yourdomain.com']
+    ? [
+        process.env.ADMIN_DASHBOARD_URL,
+        'https://ride-booking-dashboard.onrender.com',
+        'https://ride-admin-dashboard.onrender.com',
+        'https://bumbblejobs.com',
+        'https://www.bumbblejobs.com',
+      ].filter(Boolean)
     : ['http://localhost:5173', 'http://localhost:5174', 'http://192.168.1.9:5173'];
 
   const io = socketIO(server, {
@@ -16,6 +24,8 @@ const setupSocket = (server) => {
     },
     transports: ['websocket', 'polling'],
     allowUpgrades: true,
+    pingTimeout: 60000,
+    pingInterval: 25000,
   });
 
   global.io = io;
@@ -51,6 +61,16 @@ const setupSocket = (server) => {
         socket.join('drivers_nearby');
       }
       socket.join(`driver_${socket.userId}`);
+
+      User.findByIdAndUpdate(socket.userId, {
+        isOnline: true,
+        lastLocationAt: new Date(),
+      }).catch(() => {});
+
+      socket.emit('connected', {
+        userId: socket.userId,
+        message: 'Connected to server',
+      });
     }
 
     socket.on('subscribe_ride', async (rideId) => {
@@ -77,6 +97,7 @@ const setupSocket = (server) => {
       if (typeof lat === 'number' && typeof lng === 'number' && isFinite(lat) && isFinite(lng)) {
         User.findByIdAndUpdate(socket.userId, {
           currentLocation: { type: 'Point', coordinates: [lng, lat] },
+          lastLocationAt: new Date(),
         }).catch(() => {});
       }
       io.to('drivers_nearby').emit('driver_location_update', {
@@ -94,12 +115,56 @@ const setupSocket = (server) => {
       });
     });
 
-    socket.on('disconnect', () => {
-      if (socket.user?.role === 'driver') {
-        User.findByIdAndUpdate(socket.userId, {
+    socket.on('driver_go_online', async () => {
+      try {
+        await User.findByIdAndUpdate(socket.userId, {
+          isOnline: true,
+          lastLocationAt: new Date(),
+        });
+        if (socket.user?.isVerified && socket.user?.onboardingStatus === 'approved') {
+          socket.join('drivers_nearby');
+        }
+      } catch (err) {}
+    });
+
+    socket.on('driver_go_offline', async () => {
+      try {
+        await User.findByIdAndUpdate(socket.userId, {
           isOnline: false,
-          $unset: { currentLocation: '' },
-        }).catch(() => {});
+        });
+        socket.leave('drivers_nearby');
+      } catch (err) {}
+    });
+
+    socket.on('request_ride_state', async (rideId) => {
+      try {
+        const ride = await Ride.findById(rideId)
+          .populate('rider', 'name phone rating profileImage')
+          .populate('driver', 'name phone rating profileImage')
+          .lean();
+
+        if (!ride) return;
+
+        const userId = socket.userId;
+        const isRider = ride.rider?._id?.toString() === userId;
+        const isDriver = ride.driver?._id?.toString() === userId;
+
+        if (isRider || isDriver) {
+          const payload = { ...ride };
+          delete payload.otp;
+          socket.emit('ride_state', payload);
+        }
+      } catch (err) {}
+    });
+
+    socket.on('disconnect', async () => {
+      if (socket.user?.role === 'driver') {
+        const driver = await User.findById(socket.userId).select('isOnline currentRide');
+        if (driver && !driver.currentRide) {
+          User.findByIdAndUpdate(socket.userId, {
+            isOnline: false,
+          }).catch(() => {});
+        }
       }
     });
   });

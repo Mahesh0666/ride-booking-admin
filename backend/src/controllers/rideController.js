@@ -10,6 +10,24 @@ const NEARBY_DRIVER_RADIUS_KM = 3;
 const MATCH_TIMEOUT_MS = 3 * 60 * 1000;
 const matchTimers = new Map();
 
+const VALID_STATUS_TRANSITIONS = {
+  requested: ['accepted', 'cancelled', 'failed'],
+  accepted: ['arriving', 'cancelled'],
+  arriving: ['in_progress', 'cancelled'],
+  in_progress: ['completed', 'cancelled'],
+  completed: [],
+  cancelled: [],
+  failed: [],
+  scheduled: ['requested', 'cancelled'],
+};
+
+const CANCELLATION_FEES = {
+  rider_before_accept: 0,
+  rider_after_accept: 25,
+  rider_after_arrival: 50,
+  driver_after_accept: 0,
+};
+
 const failUnmatchedRide = async (rideId, riderId, fare) => {
   try {
     const ride = await Ride.findById(rideId).select('-otp');
@@ -228,13 +246,13 @@ const requestRide = async (req, res, next) => {
       return copy;
     })();
 
-    // Notify only approved/online drivers physically within 3km of the pickup
     const nearbyDrivers = await User.find({
       role: 'driver',
       isDriver: true,
       isVerified: true,
       onboardingStatus: 'approved',
       isOnline: true,
+      lastLocationAt: { $gte: new Date(Date.now() - 120 * 1000) },
       currentLocation: {
         $geoWithin: {
           $centerSphere: [
@@ -256,7 +274,6 @@ const requestRide = async (req, res, next) => {
       `[ride] ride_requested => ${notifiedIds.length} nearby driver(s) within ${NEARBY_DRIVER_RADIUS_KM}km for ride ${ride._id} (${notifiedIds.join(',') || 'none'})`
     );
 
-    // 3-minute window: no driver accepted -> fail the ride and suggest a tip
     const timer = setTimeout(
       () => failUnmatchedRide(ride._id, rider._id, quotedFare),
       MATCH_TIMEOUT_MS
@@ -355,9 +372,20 @@ const acceptRide = async (req, res, next) => {
       });
     }
 
+    const driverWithActiveRide = await Ride.findOne({
+      driver: driver._id,
+      status: { $in: ['accepted', 'arriving', 'in_progress'] },
+    });
+
+    if (driverWithActiveRide) {
+      return res.status(400).json({
+        error: { message: 'You already have an active ride' },
+      });
+    }
+
     const ride = await Ride.findOneAndUpdate(
       { _id: rideId, status: 'requested', driver: null },
-      { $set: { status: 'accepted', driver: driver._id } },
+      { $set: { status: 'accepted', driver: driver._id, acceptedAt: new Date() } },
       { new: true }
     ).populate('rider', 'name phone rating profileImage');
 
@@ -380,9 +408,6 @@ const acceptRide = async (req, res, next) => {
 
     const safePayload = { ...populatedRide };
     delete safePayload.otp;
-    // The rider must be able to read the OTP to tell the driver; keep it in the
-    // rider-targeted payload (the driver never needs the OTP over the socket —
-    // they fetch it via getRide and enter it themselves).
     const riderPayload = { ...populatedRide };
 
     if (global.io) {
@@ -394,10 +419,7 @@ const acceptRide = async (req, res, next) => {
           acceptedByName: driver.name,
         });
 
-      // Emit to user_<riderId> (rider's personal room — joined on socket connect)
       global.io.to(`user_${ride.rider._id}`).emit('ride_accepted', riderPayload);
-      // Also emit to ride_<rideId> room as a backup channel in case the rider
-      // reconnected and the personal room was stale.
       global.io.to(`ride_${ride._id}`).emit('ride_accepted', riderPayload);
       global.io.to(`driver_${driver._id}`).emit('ride_accepted', safePayload);
     }
@@ -414,7 +436,7 @@ const acceptRide = async (req, res, next) => {
       data: { rideId: ride._id },
     });
 
-const isRider = ride.rider._id.toString() === req.user._id.toString();
+    const isRider = ride.rider._id.toString() === req.user._id.toString();
     let responseRide = ride;
 
     if (!isRider) {
@@ -532,12 +554,14 @@ const updateRideStatus = async (req, res, next) => {
       ride.status = 'cancelled';
       ride.cancelledAt = new Date();
       ride.cancellationBy = 'driver';
+      ride.cancellationFee = CANCELLATION_FEES.driver_after_accept;
       await ride.save();
 
       if (global.io) {
         global.io.to(`user_${ride.rider}`).emit('ride_cancelled', {
           rideId,
           cancelledBy: 'driver',
+          cancellationFee: ride.cancellationFee,
         });
       }
 
@@ -547,14 +571,18 @@ const updateRideStatus = async (req, res, next) => {
       });
     }
 
-    const validStatuses = ['arriving', 'in_progress', 'completed'];
-    if (!validStatuses.includes(status)) {
+    const allowed = VALID_STATUS_TRANSITIONS[ride.status] || [];
+    if (!allowed.includes(status)) {
       return res.status(400).json({
-        error: { message: 'Invalid status' },
+        error: { message: `Cannot transition from ${ride.status} to ${status}` },
       });
     }
 
     ride.status = status;
+
+    if (status === 'arriving') {
+      ride.arrivingAt = new Date();
+    }
 
     if (status === 'completed') {
       ride.completedAt = new Date();
@@ -638,28 +666,42 @@ const cancelRide = async (req, res, next) => {
       });
     }
 
+    let cancellationFee = 0;
+    if (ride.status === 'accepted') {
+      cancellationFee = CANCELLATION_FEES.rider_after_accept;
+    } else if (ride.status === 'arriving') {
+      cancellationFee = CANCELLATION_FEES.rider_after_arrival;
+    }
+
     ride.status = 'cancelled';
     ride.cancelledAt = new Date();
     ride.cancellationBy = 'rider';
     ride.cancellationReason = reason;
+    ride.cancellationFee = cancellationFee;
 
     await ride.save();
+
+    if (matchTimers.has(rideId.toString())) {
+      clearTimeout(matchTimers.get(rideId.toString()));
+      matchTimers.delete(rideId.toString());
+    }
 
     if (global.io) {
       global.io
         .to(`user_${ride.rider}`)
-        .emit('ride_cancelled', { rideId, cancelledBy: 'rider' });
+        .emit('ride_cancelled', { rideId, cancelledBy: 'rider', cancellationFee });
 
       if (ride.driver) {
         global.io
           .to(`driver_${ride.driver}`)
-          .emit('ride_cancelled', { rideId, cancelledBy: 'rider' });
+          .emit('ride_cancelled', { rideId, cancelledBy: 'rider', cancellationFee });
       }
     }
 
     res.status(200).json({
       success: true,
       ride,
+      cancellationFee,
     });
   } catch (err) {
     next(err);

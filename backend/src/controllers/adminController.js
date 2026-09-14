@@ -1,7 +1,25 @@
 const User = require('../models/User');
 const Ride = require('../models/Ride');
 const Payment = require('../models/Payment');
+const AuditLog = require('../models/AuditLog');
 const { createNotification } = require('./notificationController');
+
+const logAudit = async (req, action, resource, resourceId, details = {}) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') return;
+    await AuditLog.create({
+      admin: req.user._id,
+      action,
+      resource,
+      resourceId,
+      details,
+      ipAddress: req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  } catch (err) {
+    console.error('Audit log error:', err.message);
+  }
+};
 
 const getAllDrivers = async (req, res, next) => {
   try {
@@ -50,10 +68,15 @@ const reviewDriver = async (req, res, next) => {
 
     await user.save();
 
+    await logAudit(req, `driver_${action}`, 'driver', user._id, {
+      driverName: user.name,
+      reason: user.rejectionReason,
+    });
+
     createNotification({
       userId: user._id,
       type: 'account',
-      title: action === 'approve' ? 'Profile approved 🎉' : 'Profile rejected',
+      title: action === 'approve' ? 'Profile approved' : 'Profile rejected',
       message:
         action === 'approve'
           ? 'Congratulations! Your documents were approved. You can now go online and accept rides.'
@@ -121,11 +144,17 @@ const updateUserStatus = async (req, res, next) => {
       });
     }
 
-    if (isVerified !== undefined) user.isVerified = isVerified;
-    if (isOnline !== undefined) user.isOnline = isOnline;
-    if (isDriver !== undefined) user.isDriver = isDriver;
+    const changes = {};
+    if (isVerified !== undefined) { user.isVerified = isVerified; changes.isVerified = isVerified; }
+    if (isOnline !== undefined) { user.isOnline = isOnline; changes.isOnline = isOnline; }
+    if (isDriver !== undefined) { user.isDriver = isDriver; changes.isDriver = isDriver; }
 
     await user.save();
+
+    await logAudit(req, 'update_user_status', 'user', user._id, {
+      userName: user.name,
+      changes,
+    });
 
     if (global.io) {
       global.io.to(`user_${user._id}`).emit('user_updated', user);
@@ -238,12 +267,43 @@ const getAllRides = async (req, res, next) => {
   }
 };
 
+const getAuditLogs = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 50, admin, resource, action } = req.query;
+    const query = {};
+    if (admin) query.admin = admin;
+    if (resource) query.resource = resource;
+    if (action) query.action = action;
+
+    const logs = await AuditLog.find(query)
+      .populate('admin', 'name email')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    const total = await AuditLog.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      count: logs.length,
+      total,
+      page: parseInt(page),
+      logs,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const deleteUser = async (req, res, next) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
       return res.status(404).json({ error: { message: 'User not found' } });
     }
+
+    await logAudit(req, 'delete_user', 'user', user._id, { userName: user.name });
+
     res.status(200).json({ success: true, message: 'User deleted' });
   } catch (err) {
     next(err);
@@ -256,6 +316,9 @@ const deleteDriver = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ error: { message: 'Driver not found' } });
     }
+
+    await logAudit(req, 'delete_driver', 'driver', user._id, { driverName: user.name });
+
     res.status(200).json({ success: true, message: 'Driver deleted' });
   } catch (err) {
     next(err);
@@ -273,4 +336,5 @@ module.exports = {
   getAllRides,
   deleteUser,
   deleteDriver,
+  getAuditLogs,
 };

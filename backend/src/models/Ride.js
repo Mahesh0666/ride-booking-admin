@@ -39,6 +39,7 @@ const rideSchema = new mongoose.Schema(
       type: String,
       enum: ['scheduled', 'requested', 'accepted', 'arriving', 'in_progress', 'completed', 'cancelled', 'failed'],
       default: 'requested',
+      index: true,
     },
     scheduledAt: Date,
     isScheduled: {
@@ -60,7 +61,7 @@ const rideSchema = new mongoose.Schema(
     },
     vehicleType: {
       type: String,
-      enum: ['auto'],
+      enum: ['auto', 'sedan_basic', 'sedan_comfort', 'suv', 'mvp'],
       default: 'auto',
     },
     tip: {
@@ -99,6 +100,8 @@ const rideSchema = new mongoose.Schema(
     estimatedArrival: {
       type: Number,
     },
+    acceptedAt: Date,
+    arrivingAt: Date,
     startedAt: Date,
     completedAt: Date,
     cancelledAt: Date,
@@ -106,6 +109,10 @@ const rideSchema = new mongoose.Schema(
     cancellationBy: {
       type: String,
       enum: ['rider', 'driver', 'system'],
+    },
+    cancellationFee: {
+      type: Number,
+      default: 0,
     },
     rating: {
       rated: { type: Boolean, default: false },
@@ -131,5 +138,8 @@ const rideSchema = new mongoose.Schema(
 rideSchema.index({ pickupLocation: '2dsphere' });
 rideSchema.index({ dropoffLocation: '2dsphere' });
 rideSchema.index({ driverLocation: '2dsphere' });
+rideSchema.index({ rider: 1, status: 1 });
+rideSchema.index({ driver: 1, status: 1 });
+rideSchema.index({ status: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Ride', rideSchema);

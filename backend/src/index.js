@@ -11,7 +11,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
-const rateLimit = require('express-rate-limit');
 const http = require('http');
 const connectDB = require('./config/db');
 const config = require('./config/config');
@@ -31,6 +30,7 @@ require('./models/EmergencyContact');
 require('./models/SosEvent');
 require('./models/Payout');
 require('./models/CabBooking');
+require('./models/AuditLog');
 
 const authRoutes = require('./routes/authRoutes');
 const rideRoutes = require('./routes/rideRoutes');
@@ -83,21 +83,7 @@ app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), req
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { error: { message: 'Too many attempts, please try again later' } },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const otpLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  message: { error: { message: 'Too many OTP requests, please wait' } },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const { otpRequestLimiter, otpVerifyLimiter, authLimiter, rideRequestLimiter, locationUpdateLimiter, paymentLimiter, adminLimiter } = require('./middleware/rateLimiters');
 
 app.get('/', (req, res) => {
   res.status(200).json({
@@ -108,21 +94,50 @@ app.get('/', (req, res) => {
   });
 });
 
+app.get('/health', async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const mongoState = mongoose.connection.readyState;
+    const mongoStates = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+    const dbOk = mongoState === 1;
+
+    let driverCount = 0;
+    if (dbOk) {
+      try {
+        driverCount = await mongoose.model('User').countDocuments({ role: 'driver', isOnline: true });
+      } catch (e) {}
+    }
+
+    res.status(dbOk ? 200 : 503).json({
+      status: dbOk ? 'ok' : 'degraded',
+      database: mongoStates[mongoState] || 'unknown',
+      version: '1.0.0',
+      uptime: Math.floor(process.uptime()),
+      activeDrivers: driverCount,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.status(503).json({ status: 'error', error: err.message });
+  }
+});
+
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/otp', otpLimiter);
+app.use('/api/auth/otp', otpRequestLimiter);
+app.use('/api/auth/twilio/otp/request', otpRequestLimiter);
+app.use('/api/auth/admin/login-request-otp', otpRequestLimiter);
 
 app.use('/api/auth', authRoutes);
-app.use('/api/rides', rideRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use('/api/rides', rideRequestLimiter, rideRoutes);
+app.use('/api/admin', adminLimiter, adminRoutes);
+app.use('/api/payments', paymentLimiter, paymentRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/addresses', addressRoutes);
+app.use('/api/addresses', locationUpdateLimiter, addressRoutes);
 app.use('/api/sos', sosRoutes);
 app.use('/api/payouts', payoutRoutes);
-app.use('/api/cab-bookings', cabBookingRoutes);
+app.use('/api/cab-bookings', rideRequestLimiter, cabBookingRoutes);
 
 if (config.isProduction) {
   const adminDashboardPath = path.resolve(__dirname, '..', '..', 'admin-dashboard', 'dist');

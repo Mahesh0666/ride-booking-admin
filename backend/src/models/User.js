@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema(
       enum: ['rider', 'driver', 'admin'],
       default: 'rider',
     },
+    adminRole: {
+      type: String,
+      enum: ['super_admin', 'operations', 'support', 'finance', 'driver_verification'],
+      default: 'super_admin',
+    },
     profileImage: {
       type: String,
     },
@@ -57,6 +62,9 @@ const userSchema = new mongoose.Schema(
     isOnline: {
       type: Boolean,
       default: false,
+    },
+    lastLocationAt: {
+      type: Date,
     },
     currentLocation: {
       type: {

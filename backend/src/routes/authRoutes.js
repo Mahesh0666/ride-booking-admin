@@ -30,10 +30,12 @@ const {
   twilioRequestOtp,
   twilioVerifyOtp,
   twilioRegisterUser,
+  refreshTokenHandler,
 } = require('../controllers/authController');
 
 router.post('/register', register);
 router.post('/login', login);
+router.post('/refresh-token', refreshTokenHandler);
 router.post('/firebase/login', firebaseLogin);
 router.post('/firebase/register', firebaseRegister);
 router.post('/twilio/otp/request', otpRequestLimiter, twilioRequestOtp);
