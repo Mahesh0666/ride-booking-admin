@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://ride-booking-api-r62q.onrender.com/api';
+const API_BASE_URL = 'http://192.168.1.9:5000/api';
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCCVUsWVQfNHQdDJ8J9SsJHQUhsoR3XTLo';
 
 const COLORS = {
