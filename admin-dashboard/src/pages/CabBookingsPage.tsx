@@ -27,8 +27,35 @@ export default function CabBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'confirmed' | 'in-transit' | 'completed' | 'cancelled'>('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
+  const [assignModalBooking, setAssignModalBooking] = useState<CabBooking | null>(null);
+  const [driverForm, setDriverForm] = useState({ name: '', phone: '', vehicleNumber: '', vehicleModel: '' });
+
+  const handleOpenAssignModal = (b: CabBooking) => {
+    setAssignModalBooking(b);
+    setDriverForm({
+      name: b.assignedDriver?.name || '',
+      phone: b.assignedDriver?.phone || '',
+      vehicleNumber: b.assignedDriver?.vehicleNumber || '',
+      vehicleModel: b.assignedDriver?.vehicleModel || '',
+    });
+  };
+
+  const handleAssignDriverSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignModalBooking) return;
+    if (!driverForm.name.trim() || !driverForm.phone.trim()) {
+      alert('Driver Name and Phone Number are required');
+      return;
+    }
+    try {
+      const res = await adminService.assignDriverToCabBooking(assignModalBooking._id, driverForm);
+      setBookings(bookings.map(b => b._id === assignModalBooking._id ? { ...b, status: 'confirmed', assignedDriver: res.booking?.assignedDriver || driverForm } : b));
+      setAssignModalBooking(null);
+      alert('Cab driver assigned successfully!');
+    } catch (err: any) {
+      alert('Failed to assign driver: ' + (err.message || 'Unknown error'));
+    }
+  };
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -241,6 +268,9 @@ export default function CabBookingsPage() {
                     </div>
                   </div>
                   <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-slate-200/60">
+                    <button onClick={() => handleOpenAssignModal(booking)} className="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition">
+                      <i className="fas fa-user-plus mr-1.5"></i>{booking.assignedDriver?.name ? 'Edit Driver' : 'Assign Driver'}
+                    </button>
                     {booking.status === 'pending' && (
                       <button onClick={() => handleConfirm(booking._id)} className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition">
                         <i className="fas fa-check mr-1.5"></i>Confirm
@@ -263,6 +293,79 @@ export default function CabBookingsPage() {
           })
         )}
       </div>
+
+      {/* Assign Driver Modal */}
+      {assignModalBooking && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-800">Assign Driver to Cab Booking</h3>
+              <button onClick={() => setAssignModalBooking(null)} className="text-slate-400 hover:text-slate-600">
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <form onSubmit={handleAssignDriverSubmit} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Driver Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Ramesh Kumar"
+                  value={driverForm.name}
+                  onChange={e => setDriverForm({ ...driverForm, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Driver Phone Number *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 9876543210"
+                  value={driverForm.phone}
+                  onChange={e => setDriverForm({ ...driverForm, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Vehicle Number</label>
+                <input
+                  type="text"
+                  placeholder="e.g. AP 03 AB 1234"
+                  value={driverForm.vehicleNumber}
+                  onChange={e => setDriverForm({ ...driverForm, vehicleNumber: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Vehicle Model</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Swift Dzire (White)"
+                  value={driverForm.vehicleModel}
+                  onChange={e => setDriverForm({ ...driverForm, vehicleModel: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setAssignModalBooking(null)}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-md shadow-indigo-200"
+                >
+                  Save & Notify User
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

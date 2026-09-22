@@ -1,10 +1,5 @@
 import api from './apiClient';
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => Promise.reject(error)
-);
-
 class WalletService {
   async getWallet() {
     const response = await api.get('/wallet');

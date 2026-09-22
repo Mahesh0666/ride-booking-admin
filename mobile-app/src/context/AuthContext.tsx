@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
       }
     } catch (err) {
-      console.error('Failed to load stored auth', err);
+      // silently fail
     } finally {
       setIsLoading(false);
     }
@@ -137,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await axios.post(`${API_BASE_URL}/auth/twilio/otp/request`, {
         phone,
         role: 'rider',
-      });
+      }, { timeout: 15000 });
       return res.data;
     },
     verifyOtp: async (phone: string, otp: string) => {
@@ -145,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         phone,
         otp,
         role: 'rider',
-      });
+      }, { timeout: 15000 });
       const data = res.data;
 
       if (data.token && data.user) {
@@ -159,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         phone,
         name,
         role: 'rider',
-      });
+      }, { timeout: 15000 });
       const data = res.data;
 
       if (data.token && data.user) {

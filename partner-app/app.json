@@ -60,7 +60,8 @@
         }
       ],
       "expo-image-picker",
-      "expo-task-manager"
+      "expo-task-manager",
+      "expo-notifications"
     ],
     "owner": "maheshmessi48",
     "extra": {

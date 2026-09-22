@@ -17,7 +17,7 @@ export default function RideHistoryScreen({ navigation }: any) {
       const response = await rideService.getMyRides();
       setRides(response.rides || []);
     } catch (err) {
-      console.error('Failed to load rides:', err);
+      // silently fail
     } finally {
       setIsLoading(false);
     }

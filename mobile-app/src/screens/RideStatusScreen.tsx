@@ -72,6 +72,7 @@ export default function RideStatusScreen({ navigation, route }: RideStatusScreen
   }, []);
 
   const loadRide = async () => {
+    if (!rideId) return;
     try {
       const response = await rideService.getRide(rideId);
       const fetched = response.ride;
@@ -278,7 +279,6 @@ export default function RideStatusScreen({ navigation, route }: RideStatusScreen
         showsTraffic={false}
         showsBuildings={false}
         showsIndoors={false}
-        showsPointsOfInterest={false}
         loadingEnabled={true}
         cacheEnabled={true}
       >

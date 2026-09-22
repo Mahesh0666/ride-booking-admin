@@ -61,7 +61,14 @@ export interface Ride {
 export interface CabBooking {
   _id: string;
   user: User | string;
-  driver: Driver | string;
+  driver?: Driver | string;
+  assignedDriver?: {
+    name?: string;
+    phone?: string;
+    vehicleNumber?: string;
+    vehicleModel?: string;
+    assignedAt?: string;
+  };
   status: string;
   pickupLocation?: { address?: string; latitude?: number; longitude?: number };
   dropLocation?: { address?: string; latitude?: number; longitude?: number };
@@ -88,8 +95,7 @@ export class AdminService {
     const response = await api.post('/auth/admin/login-verify-otp', { email, otp });
     const { token, user } = response.data;
     localStorage.setItem('admin_token', token);
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    return user;
+    return response.data;
   }
 
   logout() {
@@ -111,13 +117,7 @@ export class AdminService {
 
   async getDashboardStats(): Promise<DashboardStats> {
     const response = await api.get('/admin/stats');
-    const s = response.data.stats;
-    return {
-      totalUsers: s.totalUsers,
-      totalDrivers: s.activeDrivers,
-      totalRides: s.totalRides,
-      totalRevenue: s.totalRevenue,
-    };
+    return response.data;
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -127,12 +127,12 @@ export class AdminService {
 
   async getAllDrivers(): Promise<Driver[]> {
     const response = await api.get('/admin/drivers');
-    const drivers = response.data.drivers || response.data;
-    return drivers.map((d: any) => ({
-      ...d,
-      isApproved: d.onboardingStatus === 'approved',
-      isRejected: d.onboardingStatus === 'rejected',
-    }));
+    return response.data.drivers || response.data;
+  }
+
+  async getPendingDrivers(): Promise<Driver[]> {
+    const response = await api.get('/admin/drivers?status=pending');
+    return response.data.drivers || response.data;
   }
 
   async getAllRides(): Promise<Ride[]> {
@@ -177,6 +177,14 @@ export class AdminService {
 
   async confirmCabBooking(bookingId: string) {
     const response = await api.put(`/cab-bookings/admin/${bookingId}/status`, { status: 'confirmed' });
+    return response.data;
+  }
+
+  async assignDriverToCabBooking(bookingId: string, assignedDriver: { name: string; phone: string; vehicleNumber?: string; vehicleModel?: string }) {
+    const response = await api.put(`/cab-bookings/admin/${bookingId}/status`, {
+      status: 'confirmed',
+      assignedDriver,
+    });
     return response.data;
   }
 

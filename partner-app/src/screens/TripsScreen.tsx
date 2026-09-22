@@ -91,7 +91,7 @@ export default function TripsScreen({ navigation }: any) {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadTrips(); }} />}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => {
-            const statusColor = DRIVER_STATUS_COLORS[item.status] || COLORS.gray;
+            const statusColor = (DRIVER_STATUS_COLORS as Record<string, string>)[item.status] || COLORS.gray;
             return (
               <View style={styles.card}>
                 <View style={styles.cardHeader}>

@@ -33,7 +33,6 @@ export async function getRoadRoute(
       durationSeconds: route.duration,
     };
   } catch (err) {
-    console.warn('OSRM routing failed, falling back to straight line');
     return null;
   }
 }

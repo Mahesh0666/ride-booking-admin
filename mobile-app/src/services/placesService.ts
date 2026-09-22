@@ -62,7 +62,6 @@ export const autocompleteAddresses = async (
     }
     return merged.slice(0, 8);
   } catch (err) {
-    console.warn('Nominatim search failed:', err);
     return localMatches;
   }
 };
@@ -88,7 +87,7 @@ export const reverseGeocode = async (
       if (parts.length) return parts.join(', ');
     }
   } catch (err) {
-    console.warn('Device reverse geocode failed:', err);
+    
   }
 
   try {
@@ -110,7 +109,7 @@ export const reverseGeocode = async (
       return data.display_name;
     }
   } catch (err) {
-    console.warn('Reverse geocode failed:', err);
+    // silently fail
   }
   return null;
 };

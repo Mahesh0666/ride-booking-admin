@@ -117,7 +117,7 @@ export default function ProfileScreen({ navigation }: any) {
     return (
       <View style={styles.vehicleCard}>
         <View style={styles.vehicleIconWrap}>
-          <Text style={styles.vehicleIcon}>{VEHICLE_ICONS[vehicle.vehicleType] || '🛺'}</Text>
+          <Text style={styles.vehicleIcon}>{(VEHICLE_ICONS as Record<string, string>)[vehicle.vehicleType] || '🛺'}</Text>
         </View>
         <View style={styles.vehicleInfo}>
           <Text style={styles.vehicleTitle}>

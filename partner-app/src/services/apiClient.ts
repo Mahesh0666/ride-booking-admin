@@ -6,6 +6,7 @@ let authToken: string | null = null;
 let refreshTokenVal: string | null = null;
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (value: any) => void; reject: (reason?: any) => void }> = [];
+let onAuthErrorCallback: (() => void) | null = null;
 
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
@@ -81,6 +82,7 @@ api.interceptors.response.use(
         authToken = null;
         refreshTokenVal = null;
         await AsyncStorage.multiRemove(['driver_token', 'driver_refresh_token', 'driver_data']);
+        onAuthErrorCallback?.();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -102,6 +104,10 @@ export function setRefreshToken(token: string | null) {
 export function clearAuthToken() {
   authToken = null;
   refreshTokenVal = null;
+}
+
+export function setOnAuthError(callback: (() => void) | null) {
+  onAuthErrorCallback = callback;
 }
 
 export default api;

@@ -1,15 +1,5 @@
 import api from './apiClient';
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle auth errors
-    }
-    return Promise.reject(error);
-  }
-);
-
 export interface Location {
   latitude: number;
   longitude: number;

@@ -48,15 +48,14 @@ export const getCurrentLocation = async (timeoutMs = 10000): Promise<Coordinates
       });
       if (reverseGeocode) {
         coords.address = `${reverseGeocode.street || ''} ${reverseGeocode.city || ''}`.trim() ||
-          reverseGeocode.formattedAddress;
+          reverseGeocode.formattedAddress || undefined;
       }
     } catch (err) {
-      console.warn('Reverse geocode failed:', err);
+      // silently fail
     }
 
     return coords;
   } catch (err) {
-    console.error('Error getting location:', err);
     return null;
   }
 };
@@ -79,7 +78,6 @@ export const watchLocation = (
       callback(coords);
     }
   ).catch((err) => {
-    console.error('Location watch error:', err);
     errorCallback?.(err.message);
   });
 };

@@ -29,11 +29,9 @@ import ActiveRideCard from '../components/ActiveRideCard';
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
-  Home: undefined;
+  MainTabs: undefined;
   RideStatus: { rideId?: string; pickup?: any; dropoff?: any; vehicleType?: string; fareEstimate?: number; paymentMethod?: string };
   RideHistory: undefined;
-  Bookings: undefined;
-  BookingsList: undefined;
   Offers: undefined;
   Profile: undefined;
   Receipts: undefined;
@@ -124,11 +122,10 @@ function TermsGate() {
 
 function AppStack() {
   return (
-    <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home" component={MainTabs} />
+    <Stack.Navigator initialRouteName="MainTabs" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="RideStatus" component={RideStatusScreen} />
       <Stack.Screen name="RideHistory" component={RideHistoryScreen} />
-      <Stack.Screen name="BookingsList" component={BookingsScreen} />
       <Stack.Screen name="Receipts" component={ReceiptsScreen} />
       <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />

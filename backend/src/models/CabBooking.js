@@ -39,8 +39,16 @@ const cabBookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'completed', 'cancelled'],
+    enum: ['pending', 'assigned', 'confirmed', 'in-transit', 'completed', 'cancelled'],
     default: 'pending',
+  },
+  assignedDriver: {
+    driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    name: { type: String, default: '' },
+    phone: { type: String, default: '' },
+    vehicleNumber: { type: String, default: '' },
+    vehicleModel: { type: String, default: '' },
+    assignedAt: Date,
   },
   adminNote: {
     type: String,

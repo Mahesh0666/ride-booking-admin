@@ -79,7 +79,7 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const setupSocket = async () => {
-    const authToken = driver?.token || (await AsyncStorage.getItem('driver_token'));
+    const authToken = driver?.token || (await AsyncStorage.getItem('driver_token')) || undefined;
     await socketService.connect(authToken);
 
     onRideRequested.current = (ride: Ride) => {
@@ -88,13 +88,10 @@ export default function HomeScreen({ navigation }: any) {
     socketService.on('ride_requested', onRideRequested.current);
 
     onRideTaken.current = (data: { rideId: string; acceptedBy: string }) => {
-      setIncomingRide((prev) => {
-        if (prev?._id === data.rideId) {
-          Alert.alert('Ride taken', 'Another driver accepted this ride.');
-          return null;
-        }
-        return prev;
-      });
+      const currentDriverId = driver?._id || (driver as any)?.id;
+      if (data.acceptedBy !== currentDriverId) {
+        setIncomingRide((prev) => (prev?._id === data.rideId ? null : prev));
+      }
     };
     socketService.on('ride_taken', onRideTaken.current);
 
@@ -125,7 +122,7 @@ export default function HomeScreen({ navigation }: any) {
       setIsOnline(value);
       updateDriver({ isOnline: value });
     } catch (err) {
-      console.error('Failed to update online status:', err);
+      // silently fail
     }
   };
 
@@ -225,9 +222,9 @@ export default function HomeScreen({ navigation }: any) {
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>{incomingRide.vehicleType} · {incomingRide.distance.toFixed(1)} km</Text>
             </View>
-            {incomingRide.tip > 0 && (
+            {(incomingRide.tip ?? 0) > 0 && (
               <View style={styles.detailItem}>
-                <Text style={styles.tipLabel}>Tip included · +₹{incomingRide.tip.toFixed(0)}</Text>
+                <Text style={styles.tipLabel}>Tip included · +₹{(incomingRide.tip ?? 0).toFixed(0)}</Text>
               </View>
             )}
           </View>

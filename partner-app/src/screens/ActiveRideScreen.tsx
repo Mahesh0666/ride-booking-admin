@@ -57,7 +57,7 @@ export default function ActiveRideScreen({ navigation, route }: any) {
   };
 
   const setupSocket = async () => {
-    const authToken = driver?.token || (await AsyncStorage.getItem('driver_token'));
+    const authToken = driver?.token || (await AsyncStorage.getItem('driver_token')) || undefined;
     await socketService.connect(authToken);
     socketService.subscribeToRideUpdates(rideId);
 
@@ -68,7 +68,15 @@ export default function ActiveRideScreen({ navigation, route }: any) {
           data.cancelledBy === 'rider'
             ? 'The rider has cancelled this ride.'
             : 'This ride has been cancelled.',
-          [{ text: 'OK', onPress: () => navigation.navigate('Home' as never) }]
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                socketService.unsubscribeFromRideUpdates(rideId);
+                navigation.replace('Home');
+              },
+            },
+          ]
         );
       }
     });
@@ -133,7 +141,7 @@ export default function ActiveRideScreen({ navigation, route }: any) {
     );
   }
 
-  const statusColor = DRIVER_STATUS_COLORS[ride.status] || COLORS.gray;
+  const statusColor = (DRIVER_STATUS_COLORS as Record<string, string>)[ride.status] || COLORS.gray;
   const pickupCoords = ride.pickupLocation?.coordinates || [0, 0];
   const dropoffCoords = ride.dropoffLocation?.coordinates || [0, 0];
   const isInProgress = ride.status === 'in_progress';

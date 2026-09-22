@@ -26,6 +26,10 @@ const generateToken = (id) => {
   });
 };
 
+const verifyAccessToken = (token) => {
+  return jwt.verify(token, config.jwtSecret);
+};
+
 const refreshAccessToken = (refreshToken) => {
   const decoded = jwt.verify(refreshToken, config.jwtSecret);
   if (decoded.type !== 'refresh') throw new Error('Invalid token type');
@@ -40,5 +44,6 @@ module.exports = {
   generateAccessToken,
   generateRefreshToken,
   generateTokenPair,
+  verifyAccessToken,
   refreshAccessToken,
 };

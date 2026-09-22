@@ -121,7 +121,7 @@ export default function HomeScreen({ navigation }: any) {
       setServices(list);
       if (list.length > 0) setSelectedVehicle(list[0].code);
     } catch (err) {
-      console.warn('Failed to load services', err);
+      // silently fail
     }
   };
 
@@ -140,7 +140,7 @@ export default function HomeScreen({ navigation }: any) {
         return;
       }
     } catch (e) {
-      console.warn('GPS failed, using default');
+      // GPS failed, use default location
     }
     setMapRegion(getInitialRegion(28.6139, 77.2090));
     setIsLoading(false);
@@ -179,11 +179,33 @@ export default function HomeScreen({ navigation }: any) {
     navigation.navigate('PickLocation', { mode: 'dropoff', initial: dropoff, center: pickup });
   };
 
+  const isKuppamLocation = (p: Coordinates | null, d: Coordinates | null): boolean => {
+    const pAddr = (p?.address || '').toLowerCase();
+    const dAddr = (d?.address || '').toLowerCase();
+    if (pAddr.includes('kuppam') || dAddr.includes('kuppam')) return true;
+    if (p && p.latitude >= 12.60 && p.latitude <= 12.85 && p.longitude >= 78.20 && p.longitude <= 78.50) return true;
+    if (d && d.latitude >= 12.60 && d.latitude <= 12.85 && d.longitude >= 78.20 && d.longitude <= 78.50) return true;
+    return false;
+  };
+
   const handleBookRide = useCallback(() => {
     if (!pickup || !dropoff) {
       Alert.alert('Error', 'Please select pickup and drop locations');
       return;
     }
+
+    if (selectedVehicle === 'auto' && !isKuppamLocation(pickup, dropoff)) {
+      Alert.alert(
+        'Auto Service Area',
+        'Auto booking is available only in Kuppam. For all other places, please select Cab booking.',
+        [
+          { text: 'Switch to Cab', onPress: () => setBookingMode('cab') },
+          { text: 'OK' },
+        ]
+      );
+      return;
+    }
+
     navigation.navigate('RideStatus', {
       pickup, dropoff, vehicleType: selectedVehicle, fareEstimate, paymentMethod: PAYMENT_METHOD,
     } as any);
@@ -369,7 +391,6 @@ export default function HomeScreen({ navigation }: any) {
         showsTraffic={false}
         showsBuildings={false}
         showsIndoors={false}
-        showsPointsOfInterest={false}
         loadingEnabled={true}
         moveOnMarkerPress={false}
         cacheEnabled={true}

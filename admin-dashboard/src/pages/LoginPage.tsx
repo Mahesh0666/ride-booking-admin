@@ -50,14 +50,14 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 p-8 sm:p-10">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white flex items-center justify-center mx-auto text-2xl shadow-lg shadow-indigo-200">
-            <i className="fas fa-car"></i>
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 text-white flex items-center justify-center mx-auto text-3xl shadow-xl shadow-indigo-200/80">
+            🛺
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 mt-4">
-            {step === 'login' ? 'Ride Admin' : 'Enter OTP'}
+          <h1 className="text-2xl font-extrabold text-slate-800 mt-4 tracking-tight">
+            {step === 'login' ? 'Kuppam Rides Admin' : 'Enter 6-Digit OTP'}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            {step === 'login' ? 'Sign in to manage your fleet' : 'Enter the 6-digit code sent to your email'}
+            {step === 'login' ? 'Sign in to manage Auto & Cab bookings' : 'Enter the verification code sent to your email'}
           </p>
         </div>
 

@@ -34,5 +34,7 @@ services:
         sync: false
       - key: MSG91_AUTH_KEY
         sync: false
+      - key: OTP_PROVIDER
+        value: msg91
       - key: GOOGLE_MAPS_API_KEY
         sync: false

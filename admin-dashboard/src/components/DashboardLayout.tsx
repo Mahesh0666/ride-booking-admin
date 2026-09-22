@@ -44,12 +44,15 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <aside className={`sidebar fixed md:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200/80 flex flex-col h-full transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         {/* Brand */}
-        <div className="flex items-center gap-3 px-6 h-16 border-b border-slate-200/80 flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white flex items-center justify-center text-sm shadow-md shadow-indigo-200">
-            <i className="fas fa-car"></i>
+        <div className="flex items-center gap-3 px-6 h-16 border-b border-slate-200/80 flex-shrink-0 bg-white">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 text-white flex items-center justify-center text-lg shadow-md shadow-indigo-200/80">
+            🛺
           </div>
-          <span className="font-bold text-slate-800 text-lg">RideAdmin</span>
-          <span className="ml-auto text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">v2.0</span>
+          <div>
+            <span className="font-extrabold text-slate-800 text-base tracking-tight block leading-tight">Kuppam Rides</span>
+            <span className="text-[11px] font-medium text-indigo-600">Auto & Cab Admin</span>
+          </div>
+          <span className="ml-auto text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">LIVE</span>
         </div>
 
         {/* Nav */}

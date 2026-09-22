@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_BASE_URL } from '../constants/config';
-import { setAuthToken, setRefreshToken, clearAuthToken } from '../services/apiClient';
+import { setAuthToken, setRefreshToken, clearAuthToken, setOnAuthError } from '../services/apiClient';
 import socketService from '../services/socketService';
 
 interface Driver {
@@ -61,7 +61,14 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     bootstrapAsync();
-    return () => {};
+    setOnAuthError(() => {
+      AsyncStorage.multiRemove(['driver_token', 'driver_refresh_token', 'driver_data', 'driver_terms_accepted']);
+      clearAuthToken();
+      delete axios.defaults.headers.common['Authorization'];
+      setToken(null);
+      setDriver(null);
+    });
+    return () => setOnAuthError(null);
   }, []);
 
   const bootstrapAsync = async () => {
@@ -79,7 +86,7 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
       }
     } catch (err) {
-      console.error('Failed to load stored auth', err);
+      // silently fail
     } finally {
       setIsLoading(false);
     }
@@ -157,7 +164,7 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const res = await axios.post(`${API_BASE_URL}/auth/twilio/otp/request`, {
         phone,
         role: 'driver',
-      });
+      }, { timeout: 15000 });
       return res.data;
     },
     verifyOtp: async (phone: string, otp: string) => {
@@ -165,7 +172,7 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         phone,
         otp,
         role: 'driver',
-      });
+      }, { timeout: 15000 });
       const data = res.data;
 
       if (data.token && data.user) {
@@ -179,7 +186,7 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         phone,
         name,
         role: 'driver',
-      });
+      }, { timeout: 15000 });
       const data = res.data;
 
       if (data.token && data.user) {

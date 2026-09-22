@@ -128,6 +128,10 @@ class SocketService {
     this.emit('subscribe_ride', rideId);
   }
 
+  unsubscribeFromRideUpdates(rideId: string) {
+    this.emit('unsubscribe_ride', rideId);
+  }
+
   sendDriverPosition(rideId: string, location: { latitude: number; longitude: number }) {
     this.emit('driver_position', { rideId, location });
   }

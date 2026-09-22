@@ -13,7 +13,6 @@ export interface Coordinates {
 
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
   if (error) {
-    console.error('Background location task error:', error);
     return;
   }
   if (data) {
@@ -66,7 +65,6 @@ export const getCurrentLocation = async (timeoutMs = 10000): Promise<Coordinates
       longitude: location.coords.longitude,
     };
   } catch (err) {
-    console.error('Error getting location:', err);
     return null;
   }
 };
@@ -115,7 +113,6 @@ export const startBackgroundLocationUpdates = async (): Promise<boolean> => {
     });
     return true;
   } catch (err) {
-    console.warn('Background location updates unavailable:', err);
     return false;
   }
 };
@@ -127,7 +124,7 @@ export const stopBackgroundLocationUpdates = async () => {
       await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
     }
   } catch (err) {
-    console.warn('Failed to stop background location updates:', err);
+    // silently fail
   }
 };
 

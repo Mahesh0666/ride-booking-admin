@@ -128,6 +128,17 @@ const estimateFare = async (req, res, next) => {
   }
 };
 
+const isKuppamLocation = (address = '', lat, lng) => {
+  const addressStr = String(address).toLowerCase();
+  if (addressStr.includes('kuppam')) return true;
+  if (typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng)) {
+    if (lat >= 12.60 && lat <= 12.85 && lng >= 78.20 && lng <= 78.50) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const requestRide = async (req, res, next) => {
   const {
     pickupLat,
@@ -144,6 +155,25 @@ const requestRide = async (req, res, next) => {
   } = req.body;
 
   try {
+    const pLat = Number(pickupLat);
+    const pLng = Number(pickupLng);
+    const dLat = Number(dropoffLat);
+    const dLng = Number(dropoffLng);
+
+    if (isNaN(pLat) || isNaN(pLng) || isNaN(dLat) || isNaN(dLng)) {
+      return res.status(400).json({
+        error: { message: 'Invalid pickup or dropoff location coordinates' },
+      });
+    }
+
+    if (vehicleType === 'auto') {
+      if (!isKuppamLocation(pickupAddress, pLat, pLng) && !isKuppamLocation(dropoffAddress, dLat, dLng)) {
+        return res.status(400).json({
+          error: { message: 'Auto booking is available only in Kuppam. Please book a Cab for other locations.' },
+        });
+      }
+    }
+
     const rider = req.user;
 
     const existingRide = await Ride.findOne({
@@ -173,10 +203,10 @@ const requestRide = async (req, res, next) => {
     const isScheduled = !!scheduledAt && new Date(scheduledAt).getTime() > Date.now();
 
     const path = await routingService.route({
-      lat1: parseFloat(pickupLat),
-      lng1: parseFloat(pickupLng),
-      lat2: parseFloat(dropoffLat),
-      lng2: parseFloat(dropoffLng),
+      lat1: pLat,
+      lng1: pLng,
+      lat2: dLat,
+      lng2: dLng,
     });
 
     const distance = path.distanceKm;
@@ -191,12 +221,12 @@ const requestRide = async (req, res, next) => {
       rider: rider._id,
       pickupLocation: {
         type: 'Point',
-        coordinates: [parseFloat(pickupLng), parseFloat(pickupLat)],
+        coordinates: [pLng, pLat],
         address: pickupAddress,
       },
       dropoffLocation: {
         type: 'Point',
-        coordinates: [parseFloat(dropoffLng), parseFloat(dropoffLat)],
+        coordinates: [dLng, dLat],
         address: dropoffAddress,
       },
       vehicleType,

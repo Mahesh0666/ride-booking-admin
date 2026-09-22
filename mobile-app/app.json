@@ -52,7 +52,8 @@
         {
           "locationWhenInUsePermission": "Ride-Book uses your location only when you choose it, to set pickup or drop-off points for your ride."
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "owner": "maheshmessi48",
     "extra": {

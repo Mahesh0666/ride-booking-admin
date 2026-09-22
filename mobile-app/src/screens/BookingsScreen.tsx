@@ -17,21 +17,50 @@ interface Ride {
   driver?: { name?: string; rating?: number };
 }
 
+interface CabBookingItem {
+  _id: string;
+  type: 'cab';
+  status: string;
+  pickup?: { address?: string };
+  dropoff?: { address?: string };
+  fare?: number;
+  vehicleType?: string;
+  travelDate?: string;
+  createdAt: string;
+  assignedDriver?: {
+    name?: string;
+    phone?: string;
+    vehicleNumber?: string;
+    vehicleModel?: string;
+  };
+}
+
 export default function BookingsScreen({ navigation }: any) {
-  const [rides, setRides] = useState<Ride[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      loadRides();
+      loadAllBookings();
     }, [])
   );
 
-  const loadRides = async () => {
+  const loadAllBookings = async () => {
     try {
-      const data = await rideService.getMyRides();
-      setRides(data.rides || []);
+      const [ridesRes, cabsRes] = await Promise.all([
+        rideService.getMyRides().catch(() => ({ rides: [] })),
+        rideService.getMyCabBookings().catch(() => ({ bookings: [] })),
+      ]);
+
+      const rides = (ridesRes.rides || []).map((r: any) => ({ ...r, type: 'ride' }));
+      const cabs = (cabsRes.bookings || []).map((c: any) => ({ ...c, type: 'cab' }));
+
+      const combined = [...rides, ...cabs].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      setItems(combined);
     } catch (err) {
       Alert.alert('Error', 'Failed to load bookings');
     } finally {
@@ -42,13 +71,21 @@ export default function BookingsScreen({ navigation }: any) {
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadRides();
+    loadAllBookings();
   };
 
-  const getStatusColor = (status: string) => RIDER_STATUS_COLORS[status] || COLORS.gray;
+  const getStatusColor = (status: string) => RIDER_STATUS_COLORS[status] || COLORS.primary;
 
-  const getStatusLabel = (ride: Ride) => {
-    if (ride.isScheduled && ride.status === 'scheduled') {
+  const getStatusLabel = (item: any) => {
+    if (item.type === 'cab') {
+      if (item.status === 'pending') return 'Pending Admin Assignment';
+      if (item.status === 'confirmed' || item.status === 'assigned') return 'Cab Driver Assigned';
+      if (item.status === 'completed') return 'Completed';
+      if (item.status === 'cancelled') return 'Cancelled';
+      return item.status;
+    }
+
+    if (item.isScheduled && item.status === 'scheduled') {
       return 'Scheduled';
     }
     const labels: Record<string, string> = {
@@ -59,7 +96,7 @@ export default function BookingsScreen({ navigation }: any) {
       completed: 'Completed',
       cancelled: 'Cancelled',
     };
-    return labels[ride.status] || ride.status;
+    return labels[item.status] || item.status;
   };
 
   const formatDate = (date: string) => {
@@ -76,18 +113,19 @@ export default function BookingsScreen({ navigation }: any) {
     });
   };
 
-  const openRide = (ride: Ride) => {
-    if (['scheduled'].includes(ride.status)) {
+  const openRide = (item: any) => {
+    if (item.type === 'cab') return;
+    if (['scheduled'].includes(item.status)) {
       Alert.alert(
         'Scheduled ride',
-        ride.scheduledAt
-          ? `Scheduled for ${new Date(ride.scheduledAt).toLocaleString()}`
+        item.scheduledAt
+          ? `Scheduled for ${new Date(item.scheduledAt).toLocaleString()}`
           : 'Scheduled ride',
         [{ text: 'OK' }]
       );
       return;
     }
-    navigation.navigate('RideStatus', { rideId: ride._id });
+    navigation.navigate('RideStatus', { rideId: item._id });
   };
 
   if (isLoading) {
@@ -104,28 +142,28 @@ export default function BookingsScreen({ navigation }: any) {
         <Text style={styles.headerTitle}>My Bookings</Text>
       </View>
 
-      {rides.length === 0 ? (
+      {items.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>☰</Text>
           <Text style={styles.emptyText}>No rides yet</Text>
-          <Text style={styles.emptySubtext}>Your ride history will appear here</Text>
+          <Text style={styles.emptySubtext}>Your ride & cab booking history will appear here</Text>
           <TouchableOpacity style={styles.bookButton} onPress={() => navigation.navigate('Home')}>
             <Text style={styles.bookButtonText}>Book a ride</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <FlatList
-          data={rides}
+          data={items}
           keyExtractor={(item) => item._id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.card} onPress={() => openRide(item)}>
+            <TouchableOpacity style={styles.card} onPress={() => openRide(item)} activeOpacity={item.type === 'cab' ? 1 : 0.7}>
               <View style={styles.cardHeader}>
                 <View style={styles.statusRow}>
                   <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
                   <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-                    {getStatusLabel(item)}
+                    {item.type === 'cab' ? `[CAB] ${getStatusLabel(item)}` : getStatusLabel(item)}
                   </Text>
                 </View>
                 {item.fare != null && (
@@ -134,8 +172,23 @@ export default function BookingsScreen({ navigation }: any) {
               </View>
 
               <Text style={styles.route}>
-                {item.pickupLocation?.address || 'Pickup'} → {item.dropoffLocation?.address || 'Dropoff'}
+                {item.type === 'cab'
+                  ? `${item.pickup?.address || 'Pickup'} → ${item.dropoff?.address || 'Dropoff'}`
+                  : `${item.pickupLocation?.address || 'Pickup'} → ${item.dropoffLocation?.address || 'Dropoff'}`}
               </Text>
+
+              {item.type === 'cab' && item.assignedDriver && item.assignedDriver.name ? (
+                <View style={styles.driverBox}>
+                  <Text style={styles.driverBoxTitle}>Assigned Cab Driver:</Text>
+                  <Text style={styles.driverDetailText}>👤 Name: {item.assignedDriver.name}</Text>
+                  <Text style={styles.driverDetailText}>📞 Phone: {item.assignedDriver.phone}</Text>
+                  {item.assignedDriver.vehicleNumber ? (
+                    <Text style={styles.driverDetailText}>🚗 Vehicle: {item.assignedDriver.vehicleNumber} {item.assignedDriver.vehicleModel ? `(${item.assignedDriver.vehicleModel})` : ''}</Text>
+                  ) : null}
+                </View>
+              ) : item.type === 'cab' ? (
+                <Text style={styles.pendingText}>⏳ Details sent to admin. Admin will assign a cab driver shortly.</Text>
+              ) : null}
 
               <Text style={styles.meta}>
                 {formatDate(item.createdAt)} · {formatTime(item.createdAt)}
@@ -194,6 +247,32 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   meta: { fontSize: 13, color: COLORS.gray },
+  driverBox: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 10,
+    marginVertical: 8,
+  },
+  driverBoxTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#166534',
+    marginBottom: 4,
+  },
+  driverDetailText: {
+    fontSize: 13,
+    color: '#15803D',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  pendingText: {
+    fontSize: 13,
+    color: '#D97706',
+    fontStyle: 'italic',
+    marginVertical: 6,
+  },
   empty: {
     flex: 1,
     justifyContent: 'center',

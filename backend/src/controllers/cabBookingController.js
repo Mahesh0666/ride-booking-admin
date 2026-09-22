@@ -95,19 +95,58 @@ const getAllCabBookings = async (req, res, next) => {
   }
 };
 
+const { createNotification } = require('./notificationController');
+
 const updateCabBookingStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status, adminNote } = req.body;
+    const { status, adminNote, assignedDriver } = req.body;
+
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (adminNote !== undefined) updateData.adminNote = adminNote;
+
+    if (assignedDriver && (assignedDriver.name || assignedDriver.phone)) {
+      updateData.assignedDriver = {
+        name: assignedDriver.name || '',
+        phone: assignedDriver.phone || '',
+        vehicleNumber: assignedDriver.vehicleNumber || '',
+        vehicleModel: assignedDriver.vehicleModel || '',
+        assignedAt: new Date(),
+      };
+      if (!status || status === 'pending') {
+        updateData.status = 'confirmed';
+      }
+    }
 
     const booking = await CabBooking.findByIdAndUpdate(
       id,
-      { status, adminNote: adminNote || undefined },
+      updateData,
       { new: true }
     ).populate('user', 'name phone email');
 
     if (!booking) {
       return res.status(404).json({ error: { message: 'Booking not found' } });
+    }
+
+    // Real-time update to user via socket
+    if (global.io && booking.user?._id) {
+      const userIdStr = booking.user._id.toString();
+      global.io.to(`user_${userIdStr}`).emit('cab_booking_updated', booking);
+    }
+
+    // Notification to user
+    if (booking.user?._id) {
+      const driverName = booking.assignedDriver?.name || 'a driver';
+      createNotification({
+        userId: booking.user._id,
+        type: 'cab',
+        title: booking.assignedDriver?.name ? 'Cab Driver Assigned!' : 'Cab Booking Updated',
+        message: booking.assignedDriver?.name
+          ? `Driver ${driverName} (${booking.assignedDriver.vehicleNumber || 'Cab'}) has been assigned to your booking.`
+          : `Your cab booking status has been updated to ${booking.status}.`,
+        data: { bookingId: booking._id, status: booking.status },
+      }).catch(() => {});
     }
 
     res.json({ success: true, booking });

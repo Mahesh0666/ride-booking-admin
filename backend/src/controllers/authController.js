@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const Vehicle = require('../models/Vehicle');
-const generateToken = require('../utils/generateToken');
+const { generateToken } = require('../utils/generateToken');
 const { createNotification } = require('./notificationController');
 const otpService = require('../services/otpService');
 const crypto = require('crypto');
