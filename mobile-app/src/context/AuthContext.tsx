@@ -29,7 +29,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUser: (data: Partial<User>) => void;
   otpLogin: {
-    requestOtp: (phone: string) => Promise<any>;
+    requestOtp: (phone: string, channel?: 'sms' | 'whatsapp') => Promise<any>;
     verifyOtp: (phone: string, otp: string) => Promise<{ isNewUser: boolean }>;
     registerNew: (phone: string, name: string) => Promise<void>;
   };
@@ -133,10 +133,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const otpLogin = {
-    requestOtp: async (phone: string) => {
+    requestOtp: async (phone: string, channel: 'sms' | 'whatsapp' = 'sms') => {
       const res = await axios.post(`${API_BASE_URL}/auth/twilio/otp/request`, {
         phone,
         role: 'rider',
+        channel,
       }, { timeout: 15000 });
       return res.data;
     },

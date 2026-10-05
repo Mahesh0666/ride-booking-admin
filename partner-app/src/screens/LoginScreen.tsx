@@ -11,6 +11,7 @@ export default function LoginScreen({ navigation }: any) {
   const [name, setName] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [channel, setChannel] = useState<'sms' | 'whatsapp'>('sms');
   const otpRef = useRef<TextInput>(null);
   const nameRef = useRef<TextInput>(null);
 
@@ -29,7 +30,7 @@ export default function LoginScreen({ navigation }: any) {
     }
     setIsLoading(true);
     try {
-      await otpLogin.requestOtp(phone);
+      await otpLogin.requestOtp(phone, channel);
       setStep('otp');
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.error?.message || 'Could not send OTP');
@@ -110,6 +111,20 @@ export default function LoginScreen({ navigation }: any) {
                     placeholderTextColor={COLORS.gray}
                     maxLength={10}
                   />
+                </View>
+                <View style={styles.channelRow}>
+                  <TouchableOpacity
+                    style={[styles.channelBtn, channel === 'sms' && styles.channelBtnActive]}
+                    onPress={() => setChannel('sms')}
+                  >
+                    <Text style={[styles.channelBtnText, channel === 'sms' && styles.channelBtnTextActive]}>SMS</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.channelBtn, channel === 'whatsapp' && styles.channelBtnActive]}
+                    onPress={() => setChannel('whatsapp')}
+                  >
+                    <Text style={[styles.channelBtnText, channel === 'whatsapp' && styles.channelBtnTextActive]}>WhatsApp</Text>
+                  </TouchableOpacity>
                 </View>
                 <TouchableOpacity style={styles.button} onPress={sendOtp} disabled={isLoading || phone.length !== 10}>
                   {isLoading ? (
@@ -285,6 +300,31 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 17,
     fontWeight: 'bold',
+  },
+  channelRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  channelBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: COLORS.grayLight,
+    borderRadius: 14,
+    padding: 12,
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+  },
+  channelBtnActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
+  },
+  channelBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  channelBtnTextActive: {
+    color: COLORS.white,
   },
   link: {
     color: COLORS.primary,

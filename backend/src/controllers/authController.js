@@ -883,6 +883,7 @@ const twilioRequestOtp = async (req, res, next) => {
   try {
     const phone = String(req.body.phone || '').replace(/\D/g, '');
     const role = req.body.role || 'rider';
+    const channel = req.body.channel || 'sms';
 
     if (!/^\d{10}$/.test(phone)) {
       return res.status(400).json({ error: { message: 'Enter a valid 10-digit phone number' } });
@@ -890,21 +891,26 @@ const twilioRequestOtp = async (req, res, next) => {
     if (!['rider', 'driver'].includes(role)) {
       return res.status(400).json({ error: { message: 'Invalid account type' } });
     }
+    if (!['sms', 'whatsapp'].includes(channel)) {
+      return res.status(400).json({ error: { message: 'Invalid OTP channel. Use SMS or WhatsApp.' } });
+    }
 
     const { requestId, provider, expiresInSeconds } = await otpService.requestOtp({
       phone,
       role,
       ip: req.ip,
+      channel,
     });
 
     console.log(
-      `[twilio-otp] request id=${requestId} phone=${otpService.maskPhone(phone)} role=${role} provider=${provider}`
+      `[twilio-otp] request id=${requestId} phone=${otpService.maskPhone(phone)} role=${role} provider=${provider} channel=${channel}`
     );
 
     res.status(200).json({
       success: true,
       requestId,
       expiresInSeconds,
+      channel,
     });
   } catch (err) {
     if (err instanceof otpService.OtpServiceError) {

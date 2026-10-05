@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const OtpVerification = require('../models/OtpVerification');
 const config = require('../config/config');
-const { getProvider, maskPhone } = require('./otpProviders');
+const { getProvider, getProviderByName, maskPhone } = require('./otpProviders');
 
 class OtpServiceError extends Error {
   constructor(message, statusCode = 400, code = 'OTP_ERROR') {
@@ -34,10 +34,14 @@ const validators = {
   },
 };
 
-async function requestOtp({ phone, role = 'rider', ip } = {}) {
+async function requestOtp({ phone, role = 'rider', ip, channel = 'sms' } = {}) {
   const cleanPhone = normalizePhone(phone);
   validators.phone(cleanPhone);
   validators.role(role);
+
+  if (!['sms', 'whatsapp'].includes(channel)) {
+    throw new OtpServiceError('Invalid OTP channel. Use "sms" or "whatsapp".', 400, 'OTP_BAD_CHANNEL');
+  }
 
   const windowStart = new Date(Date.now() - config.otp.maxRequestsPerPhoneMinutes * 60 * 1000);
 
@@ -75,12 +79,14 @@ async function requestOtp({ phone, role = 'rider', ip } = {}) {
     { status: 'invalidated' }
   ).exec();
 
-  const provider = getProvider();
+  const useWhatsapp = channel === 'whatsapp';
+  const provider = useWhatsapp ? getProviderByName('twilio') : getProvider();
   const sent = await provider.sendOtp({
     phone: cleanPhone,
     length: config.otp.length,
     ttlSeconds: config.otp.ttlSeconds,
     ip,
+    channel,
   });
 
   const record = await OtpVerification.create({
@@ -89,6 +95,7 @@ async function requestOtp({ phone, role = 'rider', ip } = {}) {
     requestId: sent.requestId || crypto.randomBytes(8).toString('hex'),
     reference: sent.reference || null,
     provider: sent.provider || provider.name,
+    channel,
     expiresAt: new Date(Date.now() + config.otp.ttlSeconds * 1000),
     resendCount: previous ? previous.resendCount + 1 : 0,
     lastRequestedAt: new Date(),
@@ -127,7 +134,7 @@ async function verifyOtp({ phone, role = 'rider', otp, ip } = {}) {
     throw new OtpServiceError('Too many attempts. Please request a new OTP.', 429, 'OTP_ATTEMPTS_EXCEEDED');
   }
 
-  const provider = getProvider();
+  const provider = record.provider ? getProviderByName(record.provider) : getProvider();
   const result = await provider.verifyOtp({
     phone: cleanPhone,
     otp,

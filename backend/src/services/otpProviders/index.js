@@ -16,8 +16,17 @@ const getProvider = () => {
   return provider;
 };
 
+const getProviderByName = (name) => {
+  const provider = PROVIDERS[name];
+  if (!provider) {
+    throw new Error(`Unsupported OTP provider "${name}".`);
+  }
+  return provider;
+};
+
 module.exports = {
   getProvider,
+  getProviderByName,
   maskPhone: (phone) => {
     const provider = getProvider();
     return provider.maskPhone ? provider.maskPhone(phone) : '***';

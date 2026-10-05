@@ -1,19 +1,31 @@
-import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { API_BASE_URL } from '../constants/config';
 import axios from 'axios';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+const isExpoGo = Constants.appOwnership === 'expo';
+
+let Notifications: any = null;
+if (!isExpoGo) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    Notifications = require('expo-notifications');
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+  } catch (err) {
+    Notifications = null;
+  }
+}
 
 export async function registerForPushNotifications(): Promise<string | null> {
+  if (isExpoGo || !Notifications) {
+    return null;
+  }
   try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
@@ -56,19 +68,26 @@ export async function sendPushTokenToServer(pushToken: string, authToken: string
 }
 
 export function addNotificationListeners(
-  onNotificationReceived?: (notification: Notifications.Notification) => void,
-  onNotificationTapped?: (response: Notifications.NotificationResponse) => void
+  onNotificationReceived?: (notification: any) => void,
+  onNotificationTapped?: (response: any) => void
 ) {
-  const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
-    onNotificationReceived?.(notification);
-  });
+  if (isExpoGo || !Notifications) {
+    return () => {};
+  }
+  try {
+    const receivedSub = Notifications.addNotificationReceivedListener((notification: any) => {
+      onNotificationReceived?.(notification);
+    });
 
-  const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
-    onNotificationTapped?.(response);
-  });
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response: any) => {
+      onNotificationTapped?.(response);
+    });
 
-  return () => {
-    receivedSub.remove();
-    responseSub.remove();
-  };
+    return () => {
+      receivedSub.remove();
+      responseSub.remove();
+    };
+  } catch (err) {
+    return () => {};
+  }
 }

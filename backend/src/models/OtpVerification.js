@@ -45,6 +45,7 @@ const otpVerificationSchema = new mongoose.Schema(
     verifiedAt: Date,
     ipAddress: String,
     provider: String,
+    channel: String,
   },
   { timestamps: true }
 );

@@ -26,7 +26,7 @@ const toE164 = (phone) => {
   return `+91${digits}`;
 };
 
-const sendOtp = async ({ phone, length = 6, ttlSeconds = 300 }) => {
+const sendOtp = async ({ phone, length = 6, ttlSeconds = 300, channel = 'sms' }) => {
   const client = getClient();
   const e164Phone = toE164(phone);
   const serviceSid = config.otp.twilio.verifyServiceSid;
@@ -35,15 +35,25 @@ const sendOtp = async ({ phone, length = 6, ttlSeconds = 300 }) => {
     throw new Error('TWILIO_VERIFY_SERVICE_SID must be configured');
   }
 
-  console.log(`[Twilio Verify] Sending OTP to ${e164Phone}`);
+  if (!['sms', 'whatsapp'].includes(channel)) {
+    throw new Error(`Unsupported OTP channel "${channel}". Use "sms" or "whatsapp".`);
+  }
 
-  const verification = await client.verify.v2
-    .services(serviceSid)
-    .verifications.create({
-      to: e164Phone,
-      channel: 'sms',
-      locale: 'en',
-    });
+  console.log(`[Twilio Verify] Sending OTP to ${e164Phone} via ${channel}`);
+
+  let verification;
+  try {
+    verification = await client.verify.v2
+      .services(serviceSid)
+      .verifications.create({
+        to: e164Phone,
+        channel,
+        locale: 'en',
+      });
+  } catch (err) {
+    console.error(`[Twilio Verify] Send failed:`, err.message);
+    throw new Error(err.message || 'Failed to send OTP. Please try SMS instead.');
+  }
 
   console.log(`[Twilio Verify] Sent: status=${verification.status} sid=${verification.sid}`);
 
