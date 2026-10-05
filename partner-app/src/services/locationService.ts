@@ -30,16 +30,21 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
 
 export const requestLocationPermission = async (): Promise<boolean> => {
   const { status } = await Location.requestForegroundPermissionsAsync();
-  const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
   if (status !== 'granted') {
     Alert.alert('Permission required', 'Please enable location permissions');
     return false;
   }
-  if (bgStatus !== 'granted') {
+  return true;
+};
+
+export const requestBackgroundLocationPermission = async (): Promise<boolean> => {
+  const { status } = await Location.requestBackgroundPermissionsAsync();
+  if (status !== 'granted') {
     Alert.alert(
       'Background location required',
-      'Please allow "Allow all the time" so the app can keep sharing your position for ride requests.'
+      'Please allow "Allow all the time" so the app can keep sharing your position for ride requests while you are online.'
     );
+    return false;
   }
   return true;
 };

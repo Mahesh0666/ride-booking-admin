@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Alert, ActivityIndicator, Switch } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Alert, ActivityIndicator, Switch, Modal } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDriverAuth } from '../context/AuthContext';
 import { COLORS, DRIVER_STATUS_COLORS, API_BASE_URL } from '../constants/config';
 import socketService from '../services/socketService';
 import rideService from '../services/rideService';
-import { getCurrentLocation, watchDriverLocation, startBackgroundLocationUpdates, stopBackgroundLocationUpdates } from '../services/locationService';
+import { getCurrentLocation, watchDriverLocation, startBackgroundLocationUpdates, stopBackgroundLocationUpdates, requestBackgroundLocationPermission } from '../services/locationService';
 
 interface Ride {
   _id: string;
@@ -30,13 +30,15 @@ export default function HomeScreen({ navigation }: any) {
   const [isOnline, setIsOnline] = useState(driver?.isOnline || false);
   const [incomingRide, setIncomingRide] = useState<Ride | null>(null);
   const [connected, setConnected] = useState(false);
+  const [showBgDisclosure, setShowBgDisclosure] = useState(false);
+  const [pendingOnline, setPendingOnline] = useState(false);
   const onRideRequested = useRef<any>(null);
   const onRideTaken = useRef<any>(null);
   const onRideCancelled = useRef<any>(null);
 
   useEffect(() => {
     initializeLocation();
-    startBackgroundLocationUpdates();
+    checkBgDisclosureAccepted();
     setupSocket();
 
     const unsub = socketService.onConnectionStatus(setConnected);
@@ -78,6 +80,68 @@ export default function HomeScreen({ navigation }: any) {
     setIsLoading(false);
   };
 
+  const checkBgDisclosureAccepted = async () => {
+    try {
+      const accepted = await AsyncStorage.getItem('bg_location_disclosure_accepted');
+      if (accepted !== '1' && driver?.isOnline) {
+        setShowBgDisclosure(true);
+      } else if (accepted === '1' && driver?.isOnline) {
+        startBackgroundLocationUpdates();
+      }
+    } catch (e) {
+      // silently fail
+    }
+  };
+
+  const handleBgDisclosureAccept = async () => {
+    try {
+      await AsyncStorage.setItem('bg_location_disclosure_accepted', '1');
+    } catch (e) {
+      // silently fail
+    }
+    setShowBgDisclosure(false);
+    const granted = await requestBackgroundLocationPermission();
+    if (granted) {
+      await startBackgroundLocationUpdates();
+    }
+    if (pendingOnline) {
+      setPendingOnline(false);
+      await setOnlineStatus(true);
+    }
+  };
+
+  const handleBgDisclosureDecline = () => {
+    setShowBgDisclosure(false);
+    setPendingOnline(false);
+  };
+
+  const setOnlineStatus = async (value: boolean) => {
+    try {
+      const authToken = driver?.token || (await AsyncStorage.getItem('driver_token'));
+      if (!authToken) return;
+      await fetch(`${API_BASE_URL}/auth/online-status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ isOnline: value }),
+      });
+      setIsOnline(value);
+      updateDriver({ isOnline: value });
+      if (value) {
+        const accepted = await AsyncStorage.getItem('bg_location_disclosure_accepted');
+        if (accepted === '1') {
+          await startBackgroundLocationUpdates();
+        }
+      } else {
+        await stopBackgroundLocationUpdates();
+      }
+    } catch (err) {
+      // silently fail
+    }
+  };
+
   const setupSocket = async () => {
     const authToken = driver?.token || (await AsyncStorage.getItem('driver_token')) || undefined;
     await socketService.connect(authToken);
@@ -108,22 +172,15 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const toggleOnline = async (value: boolean) => {
-    try {
-      const authToken = driver?.token || (await AsyncStorage.getItem('driver_token'));
-      if (!authToken) return;
-      await fetch(`${API_BASE_URL}/auth/online-status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({ isOnline: value }),
-      });
-      setIsOnline(value);
-      updateDriver({ isOnline: value });
-    } catch (err) {
-      // silently fail
+    if (value) {
+      const accepted = await AsyncStorage.getItem('bg_location_disclosure_accepted');
+      if (accepted !== '1') {
+        setPendingOnline(true);
+        setShowBgDisclosure(true);
+        return;
+      }
     }
+    await setOnlineStatus(value);
   };
 
   const handleAcceptRide = useCallback(async () => {
@@ -251,6 +308,36 @@ export default function HomeScreen({ navigation }: any) {
           </Text>
         </View>
       )}
+
+      <Modal
+        visible={showBgDisclosure}
+        transparent
+        animationType="fade"
+        onRequestClose={handleBgDisclosureDecline}
+      >
+        <View style={styles.disclosureOverlay}>
+          <View style={styles.disclosureCard}>
+            <Text style={styles.disclosureTitle}>Location access</Text>
+            <Text style={styles.disclosureText}>
+              Ride-Book Partner collects your location to show nearby ride requests and share your live arrival position with riders.
+            </Text>
+            <Text style={styles.disclosureText}>
+              When you go online, we continue using your location in the background — even if the app is closed or not in use — so you keep receiving ride requests and riders can track you. Background location stops as soon as you go offline.
+            </Text>
+            <Text style={styles.disclosureText}>
+              You can change this anytime in your phone settings. See our Privacy Policy for details.
+            </Text>
+            <View style={styles.disclosureButtons}>
+              <TouchableOpacity style={styles.disclosureDeclineBtn} onPress={handleBgDisclosureDecline}>
+                <Text style={styles.disclosureDeclineText}>Not now</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.disclosureAcceptBtn} onPress={handleBgDisclosureAccept}>
+                <Text style={styles.disclosureAcceptText}>I understand</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -430,5 +517,60 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
+  },
+  disclosureOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  disclosureCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+  },
+  disclosureTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginBottom: 12,
+  },
+  disclosureText: {
+    fontSize: 14,
+    color: COLORS.text,
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  disclosureButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  disclosureDeclineBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: COLORS.grayLight,
+    borderRadius: 14,
+    padding: 14,
+    alignItems: 'center',
+  },
+  disclosureDeclineText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  disclosureAcceptBtn: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+    borderRadius: 14,
+    padding: 14,
+    alignItems: 'center',
+  },
+  disclosureAcceptText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.white,
   },
 });

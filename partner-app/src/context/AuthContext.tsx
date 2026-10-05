@@ -39,7 +39,7 @@ interface AuthContextType {
   updateDriver: (data: Partial<Driver>) => void;
   refreshProfile: () => Promise<Driver | null>;
   otpLogin: {
-    requestOtp: (phone: string, channel?: 'sms' | 'whatsapp') => Promise<any>;
+    requestOtp: (phone: string) => Promise<any>;
     verifyOtp: (phone: string, otp: string) => Promise<{ isNewUser: boolean }>;
     registerNew: (phone: string, name: string) => Promise<void>;
   };
@@ -160,11 +160,11 @@ export const DriverAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const otpLogin = {
-    requestOtp: async (phone: string, channel: 'sms' | 'whatsapp' = 'sms') => {
+    requestOtp: async (phone: string) => {
       const res = await axios.post(`${API_BASE_URL}/auth/twilio/otp/request`, {
         phone,
         role: 'driver',
-        channel,
+        channel: 'sms',
       }, { timeout: 15000 });
       return res.data;
     },

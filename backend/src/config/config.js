@@ -32,5 +32,10 @@ module.exports = {
       authToken: process.env.TWILIO_AUTH_TOKEN,
       verifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID,
     },
+    twilioSms: {
+      accountSid: process.env.TWILIO_SMS_ACCOUNT_SID,
+      authToken: process.env.TWILIO_SMS_AUTH_TOKEN,
+      fromNumber: process.env.TWILIO_SMS_FROM_NUMBER,
+    },
   },
 };

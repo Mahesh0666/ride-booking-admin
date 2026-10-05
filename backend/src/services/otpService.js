@@ -96,6 +96,9 @@ async function requestOtp({ phone, role = 'rider', ip, channel = 'sms' } = {}) {
     reference: sent.reference || null,
     provider: sent.provider || provider.name,
     channel,
+    otpHash: sent.otp
+      ? crypto.createHash('sha256').update(String(sent.otp)).digest('hex')
+      : undefined,
     expiresAt: new Date(Date.now() + config.otp.ttlSeconds * 1000),
     resendCount: previous ? previous.resendCount + 1 : 0,
     lastRequestedAt: new Date(),
@@ -132,6 +135,25 @@ async function verifyOtp({ phone, role = 'rider', otp, ip } = {}) {
     record.status = 'invalidated';
     await record.save();
     throw new OtpServiceError('Too many attempts. Please request a new OTP.', 429, 'OTP_ATTEMPTS_EXCEEDED');
+  }
+
+  if (record.provider === 'twilio-sms' && record.otpHash) {
+    const incoming = crypto.createHash('sha256').update(String(otp)).digest('hex');
+    const a = Buffer.from(incoming, 'hex');
+    const b = Buffer.from(record.otpHash, 'hex');
+    const match = a.length === b.length && crypto.timingSafeEqual(a, b);
+    if (!match) {
+      record.attempts += 1;
+      if (record.attempts >= config.otp.maxAttempts) {
+        record.status = 'invalidated';
+      }
+      await record.save();
+      throw new OtpServiceError('Incorrect OTP. Please try again.', 400, 'OTP_INCORRECT');
+    }
+    record.status = 'verified';
+    record.verifiedAt = new Date();
+    await record.save();
+    return { requestId: record.requestId, verified: true };
   }
 
   const provider = record.provider ? getProviderByName(record.provider) : getProvider();

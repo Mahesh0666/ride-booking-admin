@@ -56,7 +56,8 @@
 
             <h3>1.3 Information from Third Parties</h3>
             <ul>
-                <li><strong>Authentication Providers:</strong> If you use phone number verification, we receive authentication status from Twilio</li>
+                <li><strong>Authentication Providers:</strong> If you use phone number verification, we receive authentication status from Twilio or MSG91</li>
+                <li><strong>Camera and Photo Library:</strong> We access your camera or photo gallery only when you choose to upload a profile photo (rider and partner apps) or driving licence and vehicle documents (partner app only)</li>
                 <li><strong>Payment Processors:</strong> Payment confirmation from Razorpay</li>
             </ul>
         </div>
@@ -93,6 +94,7 @@
                 </thead>
                 <tbody>
                     <tr><td>Twilio</td><td>SMS verification</td><td>Phone number</td></tr>
+                    <tr><td>MSG91</td><td>SMS verification</td><td>Phone number</td></tr>
                     <tr><td>Razorpay</td><td>Payment processing</td><td>Payment amount, ride ID</td></tr>
                     <tr><td>Google Maps</td><td>Navigation, geocoding</td><td>Locations</td></tr>
                     <tr><td>MongoDB Atlas</td><td>Database hosting</td><td>All app data</td></tr>
@@ -110,7 +112,7 @@
             <ul>
                 <li><strong>Account data:</strong> Retained while account is active</li>
                 <li><strong>Ride history:</strong> Retained for 2 years for support and legal purposes</li>
-                <li><strong>Location data:</strong> Retained for 90 days after ride completion</li>
+                <li><strong>Precise location pings:</strong> Retained for 90 days after ride completion; pickup and drop addresses linked to a ride are kept with that ride's history</li>
                 <li><strong>Payment records:</strong> Retained for 7 years as required by Indian tax law</li>
                 <li><strong>Driver documents:</strong> Retained while driver account is active</li>
             </ul>
@@ -144,7 +146,7 @@
             <h2>7. Account Deletion</h2>
             <p>You can delete your account at any time:</p>
             <ul>
-                <li><strong>In the App:</strong> Go to Profile → Settings → Delete Account</li>
+                <li><strong>In the App:</strong> Go to Profile → Delete My Account</li>
                 <li><strong>By Email:</strong> Send a request to <a href="mailto:maheshbabuv57@gmail.com">maheshbabuv57@gmail.com</a></li>
             </ul>
             <p>Account deletion is permanent and cannot be undone. All your data will be deleted within 30 days.</p>
