@@ -139,6 +139,10 @@ app.use('/api/sos', sosRoutes);
 app.use('/api/payouts', payoutRoutes);
 app.use('/api/cab-bookings', rideRequestLimiter, cabBookingRoutes);
 
+app.get(['/privacy', '/privacy-policy', '/privacy.html'], (req, res) => {
+  res.sendFile(path.resolve(__dirname, '..', '..', 'privacy-policy.html'));
+});
+
 if (config.isProduction) {
   const adminDashboardPath = path.resolve(__dirname, '..', '..', 'admin-dashboard', 'dist');
   app.use(express.static(adminDashboardPath));
